@@ -18,6 +18,9 @@
 .PARAMETER SdkFolder
     The script normally looks for SDK's under '$env:ProgramFiles\dotnet' (or {$env:ProgramFiles(x86)}\dotnet). It can be targeted to look look for SDK's in a different location by overriding this parameter. 
     This is an advanced parameter and should not be normally used. 
+.PARAMETER WindowsDesktopExtendedInfo
+    Shows extended version information about WindwosDesktop shared framework. 
+    Setting this switch implicitly implies "-Runtime windowsdesktop"
 .PARAMETER ReDownloadSdk
     When this switch is enabled, the SDK under $SdkFolder will be deleted and re-downloaded. 
     SDK's under $env:ProgramFiles or $env:ProgramFiles(x86) will not be normally deleted and re-downloaded, unless it is specified as a value for $SdkFolder. 
@@ -25,21 +28,47 @@
     When this switch is enabled, search for SDK's under $env:ProgramFiles/$env:ProgramFiles(x86) is skipped. This allows the user to download a fresh copy of the SDK. 
 .EXAMPLE
     Get-FrameworkVersions.ps1 -SdkVersion 3.0.100
-        Microsoft.NETCore.App: 3.0.0
-        Microsoft.WindowsDesktop.App: 3.0.0
-        Microsoft.WindowsDesktop.App|WPF: 3.0.0
-        Microsoft.WindowsDesktop.App|WindowsForms: 3.0.0
-        Microsoft.AspNetCore.App: 3.0.0
+
+        Shared Framework                          Version
+        ----------------                          -------
+        Microsoft.AspNetCore.App                  3.0.0  
+        Microsoft.NETCore.App                     3.0.0  
+        Microsoft.WindowsDesktop.App              3.0.0  
+        Microsoft.WindowsDesktop.App|WindowsForms 3.0.0  
+        Microsoft.WindowsDesktop.App|WPF          3.0.0  
 .EXAMPLE	
     Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 
+
+    Shared Framework                          Version               
+    ----------------                          -------               
+    Microsoft.AspNetCore.App                  3.1.0-preview3.19555.2
+    Microsoft.NETCore.App                     3.1.0-preview3.19553.2
+    Microsoft.WindowsDesktop.App              3.1.0-preview3.19553.2
+    Microsoft.WindowsDesktop.App|WindowsForms 3.1.0-preview3.19553.2
+    Microsoft.WindowsDesktop.App|WPF          3.1.0-preview3.19553.2
+
+.EXAMPLE
+    Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -DoNotFallbackToProgramFiles -WindowsDesktopExtendedInfo
         dotnet-install: .NET Core SDK version 3.1.100-preview3-014645 is already installed.
-        Microsoft.NETCore.App: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App|WPF: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App|WindowsForms: 3.1.0-preview3.19553.2
-        Microsoft.AspNetCore.App: 3.1.0-preview3.19555.2
+
+        Shared Framework                          Version               
+        ----------------                          -------               
+        Microsoft.AspNetCore.App                  3.1.0-preview3.19555.2
+        Microsoft.NETCore.App                     3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App              3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App|WindowsForms 3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App|WPF          3.1.0-preview3.19553.2
+
+
+
+        WindowsDesktop.App Repo                                   Extended Version                                               
+        -----------------------                                   ----------------                                               
+        https://github.com/dotnet/wpf                             4.8.1-preview2.19553.1+3dfee2019cb6e2294cdfed441f1ac0e6026ceff7
+        https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int 4.800.119.55302+90e4d4d634d385b0213347e8c1e43a8ca0a002c2    
+
 .EXAMPLE
 	Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -ReDownloadSdk -DoNotFallbackToProgramFiles -Verbose
+
         VERBOSE: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 exists; recreation requested - deleting...
         VERBOSE: Creating C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645...
         VERBOSE: Ensure-Path: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 - Done
@@ -58,10 +87,10 @@
         VERBOSE: dotnet-install: Is-Dotnet-Package-Installed: Path to a package: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645
         VERBOSE: Perform operation 'Query CimInstances' with following parameters, ''queryExpression' = SELECT * FROM Win32_LogicalDisk WHERE DeviceId='C:','queryDialect' = WQL,'namespaceName' = root\cimv2'.
         VERBOSE: Operation 'Query CimInstances' complete.
-        VERBOSE: dotnet-install: Zip path: C:\Users\username\AppData\Local\Temp\qdsgbwaw.isr
+        VERBOSE: dotnet-install: Zip path: C:\Users\username\AppData\Local\Temp\l3xirqom.myx
         dotnet-install: Downloading link: https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
         dotnet-install: Extracting zip from https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
-        VERBOSE: dotnet-install: Extract-Dotnet-Package -ZipPath "C:\Users\username\AppData\Local\Temp\qdsgbwaw.isr" -OutPath "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
+        VERBOSE: dotnet-install: Extract-Dotnet-Package -ZipPath "C:\Users\username\AppData\Local\Temp\l3xirqom.myx" -OutPath "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
         VERBOSE: dotnet-install: Get-List-Of-Directories-And-Versions-To-Unpack-From-Dotnet-Package -Zip "System.IO.Compression.ZipArchive" -OutPath "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
         VERBOSE: dotnet-install: Directories to unpack: host/fxr/3.1.0-preview3.19553.2/;packs/Microsoft.AspNetCore.App.Ref/3.1.0-preview3.19555.2/;packs/Microsoft.NETCore.App.Host.win-arm/3.1.0-preview3.19553.2/;packs/Microsoft.NETCore.App.Host.win-arm64/3.1.0
         -preview3.19553.2/;packs/Microsoft.NETCore.App.Host.win-x64/3.1.0-preview3.19553.2/;packs/Microsoft.NETCore.App.Host.win-x86/3.1.0-preview3.19553.2/;packs/Microsoft.NETCore.App.Ref/3.1.0-preview3.19553.2/;packs/Microsoft.WindowsDesktop.App.Ref/3.1.0-pre
@@ -77,40 +106,49 @@
         VERBOSE: 	Microsoft.WindowsDesktop.App
         VERBOSE: Found C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645\Microsoft.NETCoreSdk.BundledVersions.props
         VERBOSE: TFM: netcoreapp3.1
-        Microsoft.NETCore.App: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App|WPF: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App|WindowsForms: 3.1.0-preview3.19553.2
-        Microsoft.AspNetCore.App: 3.1.0-preview3.19555.2
+
+        Shared Framework                          Version               
+        ----------------                          -------               
+        Microsoft.AspNetCore.App                  3.1.0-preview3.19555.2
+        Microsoft.NETCore.App                     3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App              3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App|WindowsForms 3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App|WPF          3.1.0-preview3.19553.2
+
 .EXAMPLE 
     Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -DoNotFallbackToProgramFiles -Verbose
-        VERBOSE: Ensure-Path: C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 - Done
+
+        VERBOSE: Ensure-Path: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 - Done
         VERBOSE: GET https://dot.net/v1/dotnet-install.ps1 with 0-byte payload
         VERBOSE: received 25202-byte response of content type application/octet-stream
-        VERBOSE: Downloaded dotnet-install.ps1 to C:\Users\srivatsm\AppData\Local\Temp\dotnet-install.ps1
+        VERBOSE: Downloaded dotnet-install.ps1 to C:\Users\username\AppData\Local\Temp\dotnet-install.ps1
         VERBOSE: dotnet-install: Get-CLIArchitecture-From-Architecture -Architecture "x64"
         VERBOSE: dotnet-install: Get-Specific-Version-From-Version -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -Channel "LTS" -Version "3.1.100-preview3-014645" -JSonFile ""
         VERBOSE: dotnet-install: Get-Download-Link -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -SpecificVersion "3.1.100-preview3-014645" -CLIArchitecture "x64"
         VERBOSE: dotnet-install: Constructed primary named payload URL: https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
         VERBOSE: dotnet-install: Get-LegacyDownload-Link -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -SpecificVersion "3.1.100-preview3-014645" -CLIArchitecture "x64"
         VERBOSE: dotnet-install: Constructed legacy named payload URL: https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-dev-win-x64.3.1.100-preview3-014645.zip
-        VERBOSE: dotnet-install: Resolve-Installation-Path -InstallDir "C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
-        VERBOSE: dotnet-install: InstallRoot: C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645
-        VERBOSE: dotnet-install: Is-Dotnet-Package-Installed -InstallRoot "C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645" -RelativePathToPackage "sdk" -SpecificVersion "3.1.100-preview3-014645"
-        VERBOSE: dotnet-install: Is-Dotnet-Package-Installed: Path to a package: C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645
+        VERBOSE: dotnet-install: Resolve-Installation-Path -InstallDir "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
+        VERBOSE: dotnet-install: InstallRoot: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645
+        VERBOSE: dotnet-install: Is-Dotnet-Package-Installed -InstallRoot "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645" -RelativePathToPackage "sdk" -SpecificVersion "3.1.100-preview3-014645"
+        VERBOSE: dotnet-install: Is-Dotnet-Package-Installed: Path to a package: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645
         dotnet-install: .NET Core SDK version 3.1.100-preview3-014645 is already installed.
-        VERBOSE: dotnet-install: Current process PATH already contains "C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\"
+        VERBOSE: dotnet-install: Current process PATH already contains "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\"
         VERBOSE: Identified Runtimes...
         VERBOSE: 	Microsoft.AspNetCore.App
         VERBOSE: 	Microsoft.NetCore.App
         VERBOSE: 	Microsoft.WindowsDesktop.App
-        VERBOSE: Found C:\Users\srivatsm\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645\Microsoft.NETCoreSdk.BundledVersions.props
+        VERBOSE: Found C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645\Microsoft.NETCoreSdk.BundledVersions.props
         VERBOSE: TFM: netcoreapp3.1
-        Microsoft.NETCore.App: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App|WPF: 3.1.0-preview3.19553.2
-        Microsoft.WindowsDesktop.App|WindowsForms: 3.1.0-preview3.19553.2
-        Microsoft.AspNetCore.App: 3.1.0-preview3.19555.2
+
+        Shared Framework                          Version               
+        ----------------                          -------               
+        Microsoft.AspNetCore.App                  3.1.0-preview3.19555.2
+        Microsoft.NETCore.App                     3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App              3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App|WindowsForms 3.1.0-preview3.19553.2
+        Microsoft.WindowsDesktop.App|WPF          3.1.0-preview3.19553.2
+
 #>
 param(   
   [string][Alias('p')]
@@ -130,6 +168,9 @@ param(
   [string][Alias('d')]
   [Parameter(HelpMessage='Folder to downloading and extracting/installing the SDK')]
   $SdkFolder=(Join-Path $env:Temp "dotnet-$SdkVersion"),
+
+  [Parameter(HelpMessage='Shows extended version info about WindowsDesktop Shared Framework')]
+  [switch] $WindowsDesktopExtendedInfo,
 
   [Parameter(HelpMessage='Scorch and re-download the SDK even if it already exists in the destination folder')]
   [switch] $ReDownloadSdk,
@@ -225,7 +266,8 @@ Function Install-NetCore {
 
 Function Get-Runtimes {
     param(
-     [string]$Runtime
+     [string]$Runtime,
+     [switch]$WindowsDesktopExtendedInfo
     )
 
     $runtimes = @()
@@ -235,7 +277,7 @@ Function Get-Runtimes {
     if ($Runtime -ieq 'dotnet' -or $Runtime -ieq 'all') {
         $runtimes += 'Microsoft.NetCore.App' 
     }
-    if ($Runtime -ieq 'windowsdesktop' -or $Runtime -ieq 'all') {
+    if ($Runtime -ieq 'windowsdesktop' -or $Runtime -ieq 'all' -or $WindowsDesktopExtendedInfo) {
         $runtimes += 'Microsoft.WindowsDesktop.App'
     }
 
@@ -280,7 +322,7 @@ Function Search-ProgramFiles {
         return $false 
     }
 
-    $sdks = & dotnet  --list-sdks | ? {
+    $sdks = & $dotnet  --list-sdks | ? {
         $_ -ilike "*$SdkVersion *" -and $_ -ilike  "*$ProgramFilesDir*"
     } 
 
@@ -295,7 +337,81 @@ Function Search-ProgramFiles {
     return ($sdks -ne $null)
 }
 
+Function Get-WindowsDesktopInfo {
+    param(
+        [hashtable]$RuntimesFolders
+    )
+
+    $RuntimesFolders.Keys | %{
+        $framework = $_ 
+        $frameworkPath = $RuntimesFolders[$_]
+        if (-not (Test-Path $RuntimesFolders[$_])) {
+            Write-Verbose "`tPath not found: $framework`: $frameworkPath"
+        } else {
+            Write-Verbose "`tPath found: $framework`: $frameworkPath"
+        }
+    }
+
+    if ($RuntimesFolders.Keys -inotcontains 'Microsoft.WindowsDesktop.App') {
+        Write-Verbose "`tMicrosoft.WindowsDesktop.App info not found"
+        return
+    }
+
+    $wdHome = $RuntimesFolders['Microsoft.WindowsDesktop.App']
+
+    $windowsBaseVersion = Get-ChildItem -Path $wdHome -Filter '*dll' | ? {
+        $_.Name -ilike 'WindowsBase*.dll'
+    } | % { 
+
+        [string]$productVersion = $_.VersionInfo.ProductVersion
+        <#
+            These are the two possible formats
+                4,800,19,46238 @Commit: c6a86389475b7d71a073433e3b2746f10b448ecb
+                4.8.0-rc2.19462.14+3e99215204ccf7ae18e7c654ebdd77c91b7140e2 
+        #>
+        $productVersion.Replace(' @Commit: ', '+').Replace(',', '.')
+    }
+
+    
+    $presentationNativeVersion = Get-ChildItem -Path $wdHome -Filter '*dll' | ? {
+        $_.Name -ilike 'PresentationNative*.dll'
+    } | % { 
+
+        [string]$productVersion = $_.VersionInfo.ProductVersion
+        <#
+            These are the two possible formats
+                4,800,19,46238 @Commit: c6a86389475b7d71a073433e3b2746f10b448ecb
+                4.8.0-rc2.19462.14+3e99215204ccf7ae18e7c654ebdd77c91b7140e2 
+        #>
+        $productVersion.Replace(' @Commit: ', '+').Replace(',', '.')
+    }
+
+    return @{
+        'https://github.com/dotnet/wpf' = $windowsBaseVersion;
+        'https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int' = $presentationNativeVersion
+    }
+}
+
+<#https://stackoverflow.com/a/38981379#>
+Function Format-Hashtable {
+    param(
+      [Parameter(Mandatory,ValueFromPipeline)]
+      [hashtable]$Hashtable,
+
+      [ValidateNotNullOrEmpty()]
+      [string]$KeyHeader = 'Name',
+
+      [ValidateNotNullOrEmpty()]
+      [string]$ValueHeader = 'Value'
+    )
+
+    $Hashtable.GetEnumerator() |Select-Object @{Label=$KeyHeader;Expression={$_.Key}},@{Label=$ValueHeader;Expression={$_.Value}}
+
+}
+
 $Platform = Fixup-AnyCPU -Platform $Platform
+$SdkVersion = $SdkVersion.Trim()
+
 $NeedsNetCoreInstall = $true 
 if (-not $DoNotFallbackToProgramFiles) {
     if (Search-ProgramFiles -Platform $Platform -SdkVersion $SdkVersion) {
@@ -314,8 +430,11 @@ if ($NeedsNetCoreInstall) {
     }
 }
 
-$runtimesFolder = join-path $SdkFolder 'shared' 
-$runtimes = Get-Runtimes $Runtime
+if ($WindowsDesktopExtendedInfo) {
+    $runtimes = Get-Runtimes $Runtime -WindowsDesktopExtendedInfo
+} else {
+    $runtimes = Get-Runtimes $Runtime
+}
 
 $sdkPropsFolder = join-path (join-path $SdkFolder 'sdk') $SdkVersion
 $bundledVersionsPropsFile = join-path $sdkPropsFolder 'Microsoft.NETCoreSdk.BundledVersions.props'
@@ -327,6 +446,8 @@ Write-Verbose "TFM: $tfm"
 
 $knownFrameworkReferences = Select-Xml -Path $bundledVersionsPropsFile -XPath "/Project/ItemGroup/KnownFrameworkReference[@TargetFramework='$tfm']"
 
+$runtimesFolders = @{}
+$frameworkInfo = @{}
 $knownFrameworkReferences | % {
     $frameworkName = $_.Node.RuntimeFrameworkName
     if ($runtimes -icontains $frameworkName) {
@@ -335,8 +456,18 @@ $knownFrameworkReferences | % {
         if ($_.Node.Attributes["Profile"] -ne $null) {
             $profileName = $_.Node.Attributes["Profile"].Value
             $frameworkName += "|$profileName"
+        } else {
+            $runtimesFolders[$frameworkName] = join-path (join-path (join-path $SdkFolder 'shared') $frameworkName) $frameworkVersion
         }
 
-        Write-Host "$frameworkName`: $frameworkVersion"
+        $frameworkInfo[$frameworkName] = $frameworkVersion
     }
 }
+
+$frameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
+
+if ($WindowsDesktopExtendedInfo) {
+    Get-WindowsDesktopInfo $runtimesFolders | Format-Hashtable -KeyHeader 'WindowsDesktop.App Repo' -ValueHeader 'Extended Version'| ft -AutoSize 
+}
+
+
