@@ -16,3 +16,9 @@ Ths is better than the ['Use .NET Core' task](https://docs.microsoft.com/en-us/a
 ## Install-Latest-DotNetCore
 
 [Install-Latest-DotnetCore.ps1](InstallLatestDotnetCore/) is a wrapper around [dotnet-install.ps1](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script) and makes it easy to install the "latest" daily .NET Core builds or a specific version of .NET Core to Program Files folder without leaving crumbs behing in ARP (Add-Remove Programs) in Windows. 
+
+## CopyWpfBins
+
+[CopyWpfBins.ps1](CopyWpfBins/) is a handy script used to copy locally built WPF binaries from a clone/enlistment of https://github.com/dotnet/wpf to any target folder. 
+
+This is especially useful for updating a copy of the WindowsDesktop shared-framework with privately built WPF binaries, or updating a self-contained application used for testing with priate binaries. 
