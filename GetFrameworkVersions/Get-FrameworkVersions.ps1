@@ -345,14 +345,16 @@ Function Get-WindowsDesktopInfo {
     
     $versions = @()
     $versions += New-Object PSObject -Property @{
-        'Repository'='https://github.com/dotnet/wpf';
+        'Repository'='dotnet/wpf';
         'Version'=$windowsBaseVersion.Split('+')[0];
-        'Commit SHA'=$windowsBaseVersion.Split('+')[1]
+        'Commit SHA'=$windowsBaseVersion.Split('+')[1];
+        'Url'=('https://github.com/dotnet/wpf/commit/'+$windowsBaseVersion.Split('+')[1])
     }
     $versions += New-Object PSObject -Property @{
-        'Repository'='https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int';
+        'Repository'='dotnet-wpf-int';
         'Version'=$presentationNativeVersion.Split('+')[0];
-        'Commit SHA'=$presentationNativeVersion.Split('+')[1]
+        'Commit SHA'=$presentationNativeVersion.Split('+')[1];
+        'Url'=('https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int/commit/' + $presentationNativeVersion.Split('+')[1] + '/')
     }
     return $versions
 }
@@ -434,7 +436,11 @@ $frameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Ve
 
 Write-Host 'WindowsDesktop.App Extended Version Info:'
 if ($WindowsDesktopExtendedInfo) {
-    Get-WindowsDesktopInfo $runtimesFolders | ft -AutoSize -Property 'Repository','Version','Commit SHA'
+    $windowsDesktopInfo = Get-WindowsDesktopInfo $runtimesFolders 
+    $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url'
+    $windowsDesktopInfo | % { 
+        Start-Process $_.'Url'
+    }
 }
 
 
