@@ -116,63 +116,12 @@ PARAMETERS
     
     -------------------------- EXAMPLE 4 --------------------------
     
-    PS C:\>Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -ReDownloadSdk -DoNotFallbackToProgramFiles -Verbose
+    PS C:\>Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -ReDownloadSdk -DoNotFallbackToProgramFiles
     
-    VERBOSE: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 exists; recreation requested - deleting...
-           VERBOSE: Creating C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645...
-           VERBOSE: Ensure-Path: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 - Done
-           VERBOSE: GET https://dot.net/v1/dotnet-install.ps1 with 0-byte payload
-           VERBOSE: received 25202-byte response of content type application/octet-stream
-           VERBOSE: Downloaded dotnet-install.ps1 to C:\Users\username\AppData\Local\Temp\dotnet-install.ps1
-           VERBOSE: dotnet-install: Get-CLIArchitecture-From-Architecture -Architecture "x64"
-           VERBOSE: dotnet-install: Get-Specific-Version-From-Version -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -Channel "LTS" -Version 
-    "3.1.100-preview3-014645" -JSonFile ""
-           VERBOSE: dotnet-install: Get-Download-Link -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -SpecificVersion "3.1.100-preview3-014645" 
-    -CLIArchitecture "x64"
-           VERBOSE: dotnet-install: Constructed primary named payload URL: 
-    https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
-           VERBOSE: dotnet-install: Get-LegacyDownload-Link -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -SpecificVersion "3.1.100-preview3-014645" 
-    -CLIArchitecture "x64"
-           VERBOSE: dotnet-install: Constructed legacy named payload URL: 
-    https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-dev-win-x64.3.1.100-preview3-014645.zip
-           VERBOSE: dotnet-install: Resolve-Installation-Path -InstallDir "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
-           VERBOSE: dotnet-install: InstallRoot: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645
-           VERBOSE: dotnet-install: Is-Dotnet-Package-Installed -InstallRoot "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645" 
-    -RelativePathToPackage "sdk" -SpecificVersion "3.1.100-preview3-014645"
-           VERBOSE: dotnet-install: Is-Dotnet-Package-Installed: Path to a package: 
-    C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645
-           VERBOSE: Perform operation 'Query CimInstances' with following parameters, ''queryExpression' = SELECT * FROM Win32_LogicalDisk WHERE 
-    DeviceId='C:','queryDialect' = WQL,'namespaceName' = root\cimv2'.
-           VERBOSE: Operation 'Query CimInstances' complete.
-           VERBOSE: dotnet-install: Zip path: C:\Users\username\AppData\Local\Temp\l3xirqom.myx
-           dotnet-install: Downloading link: 
-    https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
+    dotnet-install: Downloading link: https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
            dotnet-install: Extracting zip from 
     https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
-           VERBOSE: dotnet-install: Extract-Dotnet-Package -ZipPath "C:\Users\username\AppData\Local\Temp\l3xirqom.myx" -OutPath 
-    "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
-           VERBOSE: dotnet-install: Get-List-Of-Directories-And-Versions-To-Unpack-From-Dotnet-Package -Zip "System.IO.Compression.ZipArchive" -OutPath 
-    "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
-           VERBOSE: dotnet-install: Directories to unpack: host/fxr/3.1.0-preview3.19553.2/;packs/Microsoft.AspNetCore.App.Ref/3.1.0-preview3.19555.2/;packs/
-    Microsoft.NETCore.App.Host.win-arm/3.1.0-preview3.19553.2/;packs/Microsoft.NETCore.App.Host.win-arm64/3.1.0
-           -preview3.19553.2/;packs/Microsoft.NETCore.App.Host.win-x64/3.1.0-preview3.19553.2/;packs/Microsoft.NETCore.App.Host.win-x86/3.1.0-preview3.19553.
-    2/;packs/Microsoft.NETCore.App.Ref/3.1.0-preview3.19553.2/;packs/Microsoft.WindowsDesktop.App.Ref/3.1.0-pre
-           view3.19553.2/;packs/NETStandard.Library.Ref/2.1.0/;sdk/3.1.100-preview3-014645/;shared/Microsoft.AspNetCore.App/3.1.0-preview3.19555.2/;shared/Mi
-    crosoft.NETCore.App/3.1.0-preview3.19553.2/;shared/Microsoft.WindowsDesktop.App/3.1.0-preview3.19553.2/;tem
-           plates/3.1.0-preview3-014645/
-           VERBOSE: dotnet-install: Is-Dotnet-Package-Installed -InstallRoot "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645" 
-    -RelativePathToPackage "sdk" -SpecificVersion "3.1.100-preview3-014645"
-           VERBOSE: dotnet-install: Is-Dotnet-Package-Installed: Path to a package: 
-    C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645
-           VERBOSE: dotnet-install: Current process PATH already contains "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\"
            dotnet-install: Installation finished
-           VERBOSE: Identified Runtimes...
-           VERBOSE: 	Microsoft.AspNetCore.App
-           VERBOSE: 	Microsoft.NetCore.App
-           VERBOSE: 	Microsoft.WindowsDesktop.App
-           VERBOSE: Found 
-    C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645\Microsoft.NETCoreSdk.BundledVersions.props
-           VERBOSE: TFM: netcoreapp3.1
     
            Shared Framework                          Version               
            ----------------                          -------               
@@ -187,41 +136,14 @@ PARAMETERS
     
     -------------------------- EXAMPLE 5 --------------------------
     
-    PS C:\>Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -DoNotFallbackToProgramFiles -Verbose
+    PS C:\>Get-FrameworkVersions.ps1 -SdkVersion 3.1.100-preview3-014645 -DoNotFallbackToProgramFiles
     
-    VERBOSE: Ensure-Path: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645 - Done
-        VERBOSE: GET https://dot.net/v1/dotnet-install.ps1 with 0-byte payload
-        VERBOSE: received 25202-byte response of content type application/octet-stream
-        VERBOSE: Downloaded dotnet-install.ps1 to C:\Users\username\AppData\Local\Temp\dotnet-install.ps1
-        VERBOSE: dotnet-install: Get-CLIArchitecture-From-Architecture -Architecture "x64"
-        VERBOSE: dotnet-install: Get-Specific-Version-From-Version -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -Channel "LTS" -Version 
-    "3.1.100-preview3-014645" -JSonFile ""
-        VERBOSE: dotnet-install: Get-Download-Link -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -SpecificVersion "3.1.100-preview3-014645" 
-    -CLIArchitecture "x64"
-        VERBOSE: dotnet-install: Constructed primary named payload URL: 
-    https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-sdk-3.1.100-preview3-014645-win-x64.zip
-        VERBOSE: dotnet-install: Get-LegacyDownload-Link -AzureFeed "https://dotnetcli.azureedge.net/dotnet" -SpecificVersion "3.1.100-preview3-014645" 
-    -CLIArchitecture "x64"
-        VERBOSE: dotnet-install: Constructed legacy named payload URL: 
-    https://dotnetcli.azureedge.net/dotnet/Sdk/3.1.100-preview3-014645/dotnet-dev-win-x64.3.1.100-preview3-014645.zip
-        VERBOSE: dotnet-install: Resolve-Installation-Path -InstallDir "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645"
-        VERBOSE: dotnet-install: InstallRoot: C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645
-        VERBOSE: dotnet-install: Is-Dotnet-Package-Installed -InstallRoot "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645" 
-    -RelativePathToPackage "sdk" -SpecificVersion "3.1.100-preview3-014645"
-        VERBOSE: dotnet-install: Is-Dotnet-Package-Installed: Path to a package: 
-    C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645
-        dotnet-install: .NET Core SDK version 3.1.100-preview3-014645 is already installed.
-        VERBOSE: dotnet-install: Current process PATH already contains "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\"
-        VERBOSE: Identified Runtimes...
-        VERBOSE: 	Microsoft.AspNetCore.App
-        VERBOSE: 	Microsoft.NetCore.App
-        VERBOSE: 	Microsoft.WindowsDesktop.App
-        VERBOSE: Found 
-    C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\sdk\3.1.100-preview3-014645\Microsoft.NETCoreSdk.BundledVersions.props
-        VERBOSE: TFM: netcoreapp3.1
+    dotnet-install: .NET Core SDK version 3.1.100-preview3-014645 is already installed.
+        dotnet-install: Adding to current process PATH: "C:\Users\username\AppData\Local\Temp\dotnet-3.1.100-preview3-014645\". Note: This change will not 
+    be visible if PowerShell was run as a child process.
     
-        Shared Framework                          Version               
-        ----------------                          -------               
+        Shared Framework                          Version
+        ----------------                          -------
         Microsoft.AspNetCore.App                  3.1.0-preview3.19555.2
         Microsoft.NETCore.App                     3.1.0-preview3.19553.2
         Microsoft.WindowsDesktop.App              3.1.0-preview3.19553.2
@@ -235,4 +157,4 @@ REMARKS
     To see the examples, type: "get-help Get-FrameworkVersions.ps1 -examples".
     For more information, type: "get-help Get-FrameworkVersions.ps1 -detailed".
     For technical information, type: "get-help Get-FrameworkVersions.ps1 -full".
-```
+    ```
