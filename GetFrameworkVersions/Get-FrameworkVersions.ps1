@@ -343,10 +343,18 @@ Function Get-WindowsDesktopInfo {
     
     Write-Verbose "`tInferring WindowsDesktop.App extended versions from WindowsBase.dll and PresentationNative*.dll"
     
-    return @{
-        'https://github.com/dotnet/wpf' = $windowsBaseVersion;
-        'https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int' = $presentationNativeVersion
+    $versions = @()
+    $versions += New-Object PSObject -Property @{
+        'Repository'='https://github.com/dotnet/wpf';
+        'Version'=$windowsBaseVersion.Split('+')[0];
+        'Commit SHA'=$windowsBaseVersion.Split('+')[1]
     }
+    $versions += New-Object PSObject -Property @{
+        'Repository'='https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int';
+        'Version'=$presentationNativeVersion.Split('+')[0];
+        'Commit SHA'=$presentationNativeVersion.Split('+')[1]
+    }
+    return $versions
 }
 
 <#https://stackoverflow.com/a/38981379#>
@@ -421,10 +429,12 @@ $knownFrameworkReferences | % {
     }
 }
 
+Write-Host 'Shared Framework Version Info:'
 $frameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
 
+Write-Host 'WindowsDesktop.App Extended Version Info:'
 if ($WindowsDesktopExtendedInfo) {
-    Get-WindowsDesktopInfo $runtimesFolders | Format-Hashtable -KeyHeader 'WindowsDesktop.App Repo' -ValueHeader 'Extended Version'| ft -AutoSize 
+    Get-WindowsDesktopInfo $runtimesFolders | ft -AutoSize -Property 'Repository','Version','Commit SHA'
 }
 
 
