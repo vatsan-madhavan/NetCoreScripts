@@ -288,7 +288,7 @@ Function Get-WindowsDesktopInfo {
     param(
         [hashtable]$RuntimesFolders
     )
-
+    
     $RuntimesFolders.Keys | %{
         $framework = $_ 
         $frameworkPath = $RuntimesFolders[$_]
@@ -333,6 +333,16 @@ Function Get-WindowsDesktopInfo {
         $productVersion.Replace(' @Commit: ', '+').Replace(',', '.')
     }
 
+    if (-not $windowsBaseVersion) {
+        Write-Warning "Could not find WindowsBase version information" 
+    }
+    
+    if (-not $presentationNativeVersion) {
+        Write-Warning "Could not find PresentationNative version information" 
+    }
+    
+    Write-Verbose "`tInferring WindowsDesktop.App extended versions from WindowsBase.dll and PresentationNative*.dll"
+    
     return @{
         'https://github.com/dotnet/wpf' = $windowsBaseVersion;
         'https://dev.azure.com/dnceng/internal/_git/dotnet-wpf-int' = $presentationNativeVersion
