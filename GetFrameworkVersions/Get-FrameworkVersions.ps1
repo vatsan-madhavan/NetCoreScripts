@@ -26,6 +26,8 @@
     SDK's under $env:ProgramFiles or $env:ProgramFiles(x86) will not be normally deleted and re-downloaded, unless it is specified as a value for $SdkFolder. 
 .PARAMETER DoNotFallbackToProgramFiles
     When this switch is enabled, search for SDK's under $env:ProgramFiles/$env:ProgramFiles(x86) is skipped. This allows the user to download a fresh copy of the SDK. 
+.PARAMETER DoNotLaunchUrls
+    Do not open any URL's in an external process
 .EXAMPLE
     Get-FrameworkVersions.ps1 -SdkVersion 3.0.100
 
@@ -123,7 +125,10 @@ param(
   [switch] $ReDownloadSdk,
 
   [Parameter(HelpMessage='If the SDK is found in Program Files, that will be normally used unless this switch is set')]
-  [switch] $DoNotFallbackToProgramFiles
+  [switch] $DoNotFallbackToProgramFiles, 
+
+  [Parameter(HelpMessage="Do not open any URL's in an external process")]
+  [switch] $DoNotLaunchUrls
 )
 
 Function IIf($If, $Then, $Else) {
@@ -438,8 +443,11 @@ Write-Host 'WindowsDesktop.App Extended Version Info:'
 if ($WindowsDesktopExtendedInfo) {
     $windowsDesktopInfo = Get-WindowsDesktopInfo $runtimesFolders 
     $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url'
-    $windowsDesktopInfo | % { 
-        Start-Process $_.'Url'
+
+    if (-not $DoNotLaunchUrls) {
+        $windowsDesktopInfo | % { 
+            Start-Process $_.'Url'
+        }
     }
 }
 
