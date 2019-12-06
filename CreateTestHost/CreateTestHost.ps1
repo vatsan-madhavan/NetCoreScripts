@@ -216,6 +216,12 @@ Write-Verbose "Staging directory will be $InstallDir"
 
 $DoNotExportPathEnv = $NoPath -or $DeleteStagingFiles
 
+if ($NoZip -and $DeleteStagingFiles) {
+    Write-Color "[Red]WARNING: Both [Cyan]-NoZip and [Cyan]-DeleteStagingFiles are specified: nothing to be done"
+    Write-Color "[Red]WARNING: Exiting..."
+    exit 
+}
+
 Try {
     & $dotnet_install -Version $BaseSdkVersion -NoPath:$DoNotExportPathEnv -Architecture $Platform -InstallDir $InstallDir | Out-Null
     Write-Verbose "Downloaded base SDK $BaseSdkVersion to the staging directory at $InstallDir"
