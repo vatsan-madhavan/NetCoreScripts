@@ -202,7 +202,7 @@ Try {
     }
 
     # Import the environment set by the script - we want the $FrameworkInfo variable set by hte script
-    . $getFrameworkVersions -SdkVersion $BaseSdkVersion -Runtime windowsDesktop -DoNotLaunchUrls -DoNotFallbackToProgramFiles -SdkFolder $InstallDir | Out-Null
+    . $getFrameworkVersions -SdkVersion $BaseSdkVersion -Runtime windowsDesktop -DoNotLaunchUrls -DoNotFallbackToProgramFiles -SdkFolder $InstallDir -Platform $Platform | Out-Null
     $WindowsDesktopFrameworkVersion = $FrameworkInfo['Microsoft.WindowsDesktop.App']
 
     if ([string]::IsNullOrEmpty($WindowsDesktopFrameworkVersion)) {

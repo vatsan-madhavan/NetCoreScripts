@@ -381,74 +381,100 @@ Function Format-Hashtable {
 
 }
 
-$Platform = Fixup-AnyCPU -Platform $Platform
-$SdkVersion = $SdkVersion.Trim()
+Function Main {
+    param(   
+      [string]
+      $Platform,
 
-$NeedsNetCoreInstall = $true 
-if (-not $DoNotFallbackToProgramFiles) {
-    if (Search-ProgramFiles -Platform $Platform -SdkVersion $SdkVersion) {
-        Write-Verbose ".NET Core SDK $SDKVersion found in Program Files - using that"
-        $SdkFolder = Get-ProgramFilesDir -Platform $Platform 
-        $ReDownloadSdk = $false 
-        $NeedsNetCoreInstall = $false 
+      [string]
+      $SdkVersion, 
+
+      [string]
+      $Runtime,
+
+      [string]
+      $SdkFolder,
+
+      [bool] $WindowsDesktopExtendedInfo,
+
+      [bool] $ReDownloadSdk,
+
+      [bool] $DoNotFallbackToProgramFiles, 
+
+      [bool] $DoNotLaunchUrls
+    )
+
+    $Platform = Fixup-AnyCPU -Platform $Platform
+    $SdkVersion = $SdkVersion.Trim()
+
+    $NeedsNetCoreInstall = $true 
+    if (-not $DoNotFallbackToProgramFiles) {
+        if (Search-ProgramFiles -Platform $Platform -SdkVersion $SdkVersion) {
+            Write-Verbose ".NET Core SDK $SDKVersion found in Program Files - using that"
+            $SdkFolder = Get-ProgramFilesDir -Platform $Platform 
+            $ReDownloadSdk = $false 
+            $NeedsNetCoreInstall = $false 
+        }
     }
-}
 
-if ($NeedsNetCoreInstall) {
-    if ($ReDownloadSdk) {
-        Install-NetCore -SdkVersion $SdkVersion -Platform $Platform -SdkFolder $SdkFolder -ReDownloadSdk
-    } else {
-        Install-NetCore $SdkVersion $Platform $SdkFolder
-    }
-}
-
-if ($WindowsDesktopExtendedInfo) {
-    $runtimes = Get-Runtimes $Runtime -WindowsDesktopExtendedInfo
-} else {
-    $runtimes = Get-Runtimes $Runtime
-}
-
-$sdkPropsFolder = join-path (join-path $SdkFolder 'sdk') $SdkVersion
-$bundledVersionsPropsFile = join-path $sdkPropsFolder 'Microsoft.NETCoreSdk.BundledVersions.props'
-Write-Verbose "Found $bundledVersionsPropsFile"
-
-$tfm = Get-Tfm $SdkVersion
-Write-Verbose "TFM: $tfm"
-
-
-$knownFrameworkReferences = Select-Xml -Path $bundledVersionsPropsFile -XPath "/Project/ItemGroup/KnownFrameworkReference[@TargetFramework='$tfm']"
-
-$runtimesFolders = @{}
-$FrameworkInfo = @{}
-$knownFrameworkReferences | % {
-    $frameworkName = $_.Node.RuntimeFrameworkName
-    if ($runtimes -icontains $frameworkName) {
-        $frameworkVersion = $_.Node.DefaultRuntimeFrameworkVersion 
-
-        if ($_.Node.Attributes["Profile"] -ne $null) {
-            $profileName = $_.Node.Attributes["Profile"].Value
-            $frameworkName += "|$profileName"
+    if ($NeedsNetCoreInstall) {
+        if ($ReDownloadSdk) {
+            Install-NetCore -SdkVersion $SdkVersion -Platform $Platform -SdkFolder $SdkFolder -ReDownloadSdk
         } else {
-            $runtimesFolders[$frameworkName] = join-path (join-path (join-path $SdkFolder 'shared') $frameworkName) $frameworkVersion
-        }
-
-        $FrameworkInfo[$frameworkName] = $frameworkVersion
-    }
-}
-
-Write-Host 'Shared Framework Version Info:'
-$FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
-
-Write-Host 'WindowsDesktop.App Extended Version Info:'
-if ($WindowsDesktopExtendedInfo) {
-    $windowsDesktopInfo = Get-WindowsDesktopInfo $runtimesFolders 
-    $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url'
-
-    if (-not $DoNotLaunchUrls) {
-        $windowsDesktopInfo | % { 
-            Start-Process $_.'Url'
+            Install-NetCore $SdkVersion $Platform $SdkFolder
         }
     }
+
+    if ($WindowsDesktopExtendedInfo) {
+        $runtimes = Get-Runtimes $Runtime -WindowsDesktopExtendedInfo
+    } else {
+        $runtimes = Get-Runtimes $Runtime
+    }
+
+    $sdkPropsFolder = join-path (join-path $SdkFolder 'sdk') $SdkVersion
+    $bundledVersionsPropsFile = join-path $sdkPropsFolder 'Microsoft.NETCoreSdk.BundledVersions.props'
+    Write-Verbose "Found $bundledVersionsPropsFile"
+
+    $tfm = Get-Tfm $SdkVersion
+    Write-Verbose "TFM: $tfm"
+
+
+    $knownFrameworkReferences = Select-Xml -Path $bundledVersionsPropsFile -XPath "/Project/ItemGroup/KnownFrameworkReference[@TargetFramework='$tfm']"
+
+    $runtimesFolders = @{}
+    $FrameworkInfo = @{}
+    $knownFrameworkReferences | % {
+        $frameworkName = $_.Node.RuntimeFrameworkName
+        if ($runtimes -icontains $frameworkName) {
+            $frameworkVersion = $_.Node.DefaultRuntimeFrameworkVersion 
+
+            if ($_.Node.Attributes["Profile"] -ne $null) {
+                $profileName = $_.Node.Attributes["Profile"].Value
+                $frameworkName += "|$profileName"
+            } else {
+                $runtimesFolders[$frameworkName] = join-path (join-path (join-path $SdkFolder 'shared') $frameworkName) $frameworkVersion
+            }
+
+            $FrameworkInfo[$frameworkName] = $frameworkVersion
+        }
+    }
+
+    Write-Host 'Shared Framework Version Info:'
+    $FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
+
+    Write-Host 'WindowsDesktop.App Extended Version Info:'
+    if ($WindowsDesktopExtendedInfo) {
+        $windowsDesktopInfo = Get-WindowsDesktopInfo $runtimesFolders 
+        $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url'
+
+        if (-not $DoNotLaunchUrls) {
+            $windowsDesktopInfo | % { 
+                Start-Process $_.'Url'
+            }
+        }
+    }
+
+    return $FrameworkInfo
 }
 
-
+$FrameworkInfo = Main $Platform $SdkVersion $Runtime $SdkFolder $WindowsDesktopExtendedInfo $ReDownloadSdk $DoNotFallbackToProgramFiles $DoNotLaunchUrls
