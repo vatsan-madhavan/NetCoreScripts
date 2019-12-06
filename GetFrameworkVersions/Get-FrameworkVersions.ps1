@@ -395,8 +395,6 @@ Function Main {
       [string]
       $SdkFolder,
 
-      [bool] $WindowsDesktopExtendedInfo,
-
       [bool] $ReDownloadSdk,
 
       [bool] $DoNotFallbackToProgramFiles, 
@@ -441,7 +439,7 @@ Function Main {
 
     $knownFrameworkReferences = Select-Xml -Path $bundledVersionsPropsFile -XPath "/Project/ItemGroup/KnownFrameworkReference[@TargetFramework='$tfm']"
 
-    $runtimesFolders = @{}
+    $script:runtimesFolders = @{}
     $FrameworkInfo = @{}
     $knownFrameworkReferences | % {
         $frameworkName = $_.Node.RuntimeFrameworkName
@@ -452,29 +450,30 @@ Function Main {
                 $profileName = $_.Node.Attributes["Profile"].Value
                 $frameworkName += "|$profileName"
             } else {
-                $runtimesFolders[$frameworkName] = join-path (join-path (join-path $SdkFolder 'shared') $frameworkName) $frameworkVersion
+                $script:runtimesFolders[$frameworkName] = join-path (join-path (join-path $SdkFolder 'shared') $frameworkName) $frameworkVersion
             }
 
             $FrameworkInfo[$frameworkName] = $frameworkVersion
         }
     }
 
-    Write-Host 'Shared Framework Version Info:'
-    $FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize | Out-Host
-
-    if ($WindowsDesktopExtendedInfo) {
-        Write-Host 'WindowsDesktop.App Extended Version Info:'
-        $windowsDesktopInfo = Get-WindowsDesktopInfo $runtimesFolders 
-        $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url' | Out-Host
-
-        if (-not $DoNotLaunchUrls) {
-            $windowsDesktopInfo | % { 
-                Start-Process $_.'Url'
-            }
-        }
-    }
-
     return $FrameworkInfo
 }
 
-$FrameworkInfo = (Main $Platform $SdkVersion $Runtime $SdkFolder $WindowsDesktopExtendedInfo $ReDownloadSdk $DoNotFallbackToProgramFiles $DoNotLaunchUrls)[-1]
+
+$global:FrameworkInfo = Main $Platform $SdkVersion $Runtime $SdkFolder $ReDownloadSdk $DoNotFallbackToProgramFiles $DoNotLaunchUrls
+Write-Host 'Shared Framework Version Info:'
+$global:FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize | Out-Default
+
+if ($WindowsDesktopExtendedInfo) {
+    $global:WindowsDesktopInfo = Get-WindowsDesktopInfo $script:runtimesFolders
+
+    Write-Host 'WindowsDesktop.App Extended Version Info:'
+    $global:windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url' | Out-Default
+
+    if (-not $DoNotLaunchUrls) {
+        $global:windowsDesktopInfo | % { 
+            Start-Process $_.'Url'
+        }
+    }
+}
