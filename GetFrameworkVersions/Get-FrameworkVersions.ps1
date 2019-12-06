@@ -460,12 +460,12 @@ Function Main {
     }
 
     Write-Host 'Shared Framework Version Info:'
-    $FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
+    $FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize | Out-Host
 
-    Write-Host 'WindowsDesktop.App Extended Version Info:'
     if ($WindowsDesktopExtendedInfo) {
+        Write-Host 'WindowsDesktop.App Extended Version Info:'
         $windowsDesktopInfo = Get-WindowsDesktopInfo $runtimesFolders 
-        $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url'
+        $windowsDesktopInfo | ft -AutoSize -Property 'Repository','Version','Commit SHA', 'Url' | Out-Host
 
         if (-not $DoNotLaunchUrls) {
             $windowsDesktopInfo | % { 
@@ -477,4 +477,4 @@ Function Main {
     return $FrameworkInfo
 }
 
-$FrameworkInfo = Main $Platform $SdkVersion $Runtime $SdkFolder $WindowsDesktopExtendedInfo $ReDownloadSdk $DoNotFallbackToProgramFiles $DoNotLaunchUrls
+$FrameworkInfo = (Main $Platform $SdkVersion $Runtime $SdkFolder $WindowsDesktopExtendedInfo $ReDownloadSdk $DoNotFallbackToProgramFiles $DoNotLaunchUrls)[-1]
