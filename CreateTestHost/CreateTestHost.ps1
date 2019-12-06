@@ -18,7 +18,7 @@
     with locally built files will be deleted at the end of the script. 
 .PARAMETER NoPath
     When specified, the PATH environment variable is not exported/set after the creation of the test host. Specifying
-    -DeleteStagingDirectory has the same effect as -NoPath
+    -DeleteStagingFiles has the same effect as -NoPath
 .EXAMPLE
     CreateTestHost.ps1 -BaseSdkVersion 3.1.100 -Configuration Release -Platform x64 -RepoRoots C:\src\repos\wpf,C:\src\repos\dotnet-wpf-int -DeleteStagingFiles
 
