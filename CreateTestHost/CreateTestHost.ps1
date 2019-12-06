@@ -71,14 +71,39 @@ param(
 
   [switch]
   [Parameter(HelpMessage="When this switch is set, the privatized test-host is not zipped into an archive for sharing")]
-  $NoZip
+  $NoZip,
+
+  [string]
+  [Parameter(HelpMessage="Directory where the test-host SDK is staged, defaults to %TEMP% direcotry")]
+  [ValidateScript({ Test-Path -Path $_ -PathType Container })]
+  $StagingRoot=[System.IO.Path]::GetTempPath(),
+
+  [string]
+  [Parameter(HelpMessage="Target file path with extesion '.zip'")]
+  [ValidateScript({
+    $file = $_
+    if (Test-Path -Path $file) {
+        Write-Warning "$file : File already exists"
+        $false
+    }
+
+    if ([System.IO.Path]::GetExtension($file) -ine 'zip') {
+        Write-Warning "$file should have 'zip' extension"
+        $false
+    }
+
+    $true
+  })]
+  $DestinationPath=$null
 )
 
 # https://stackoverflow.com/posts/34559554/revisions
 function New-TemporaryDirectory {
-    $parent = [System.IO.Path]::GetTempPath()
-    [string] $name = [System.Guid]::NewGuid()
-    New-Item -ItemType Directory -Path (Join-Path $parent $name)
+    if (Get-Variable -Name StagingRoot -Scope Script -ErrorAction SilentlyContinue) {
+        New-Item -ItemType Directory -Path (Join-Path $StagingRoot ([System.Guid]::NewGuid()))
+    } else {
+        New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid()))
+    }
 }
 
 Function Get-PSScriptLocationFullPath {
@@ -235,7 +260,11 @@ Try {
 
     if (-not $NoZip) {
         $username = $env:USERNAME
-        $ArchiveName = Join-Path $InstallDirBase "$BaseSdkVersion.$Platform.private.$username.zip"
+        if ($DestinationPath) {
+            $ArchiveName = $DestinationPath
+        } else {
+            $ArchiveName = Join-Path $InstallDirBase "$BaseSdkVersion.$Platform.private.$username.zip"
+        }
 
         Write-Verbose "Creating archive $ArchiveName..."
         Compress-Archive -Path "$InstallDir\*" -DestinationPath $ArchiveName
