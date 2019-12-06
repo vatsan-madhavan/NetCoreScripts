@@ -419,7 +419,7 @@ Write-Verbose "TFM: $tfm"
 $knownFrameworkReferences = Select-Xml -Path $bundledVersionsPropsFile -XPath "/Project/ItemGroup/KnownFrameworkReference[@TargetFramework='$tfm']"
 
 $runtimesFolders = @{}
-$frameworkInfo = @{}
+$FrameworkInfo = @{}
 $knownFrameworkReferences | % {
     $frameworkName = $_.Node.RuntimeFrameworkName
     if ($runtimes -icontains $frameworkName) {
@@ -432,12 +432,12 @@ $knownFrameworkReferences | % {
             $runtimesFolders[$frameworkName] = join-path (join-path (join-path $SdkFolder 'shared') $frameworkName) $frameworkVersion
         }
 
-        $frameworkInfo[$frameworkName] = $frameworkVersion
+        $FrameworkInfo[$frameworkName] = $frameworkVersion
     }
 }
 
 Write-Host 'Shared Framework Version Info:'
-$frameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
+$FrameworkInfo | Format-Hashtable -KeyHeader 'Shared Framework' -ValueHeader 'Version' | sort -Property 'Shared Framework' | ft -AutoSize
 
 Write-Host 'WindowsDesktop.App Extended Version Info:'
 if ($WindowsDesktopExtendedInfo) {

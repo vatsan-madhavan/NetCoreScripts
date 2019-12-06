@@ -195,12 +195,26 @@ Try {
     & $dotnet_install -Version $BaseSdkVersion -NoPath:$DoNotExportPathEnv -Architecture $Platform -InstallDir $InstallDir | Out-Null
     Write-Verbose "Downloaded base SDK $BaseSdkVersion to the staging directory at $InstallDir"
 
-    $Destination = Join-Path (Join-path (Join-Path $InstallDir 'shared') 'Microsoft.WindowsDesktop.App') $BaseSdkVersion
+
+    $getFrameworkVersions = Join-Path (Join-Path (Split-Path -parent $ScriptLocation) 'GetFrameworkVersions') 'Get-FrameworkVersions.ps1'
+    if (-not (Test-Path $getFrameworkVersions -PathType Leaf)) {
+        Write-Error "$getFrameworkVersions not found" -ErrorAction Stop
+    }
+
+    # Import the environment set by the script - we want the $FrameworkInfo variable set by hte script
+    . $getFrameworkVersions -SdkVersion $BaseSdkVersion -Runtime windowsDesktop -DoNotLaunchUrls -DoNotFallbackToProgramFiles -SdkFolder $InstallDir | Out-Null
+    $WindowsDesktopFrameworkVersion = $FrameworkInfo['Microsoft.WindowsDesktop.App']
+
+    if ([string]::IsNullOrEmpty($WindowsDesktopFrameworkVersion)) {
+        Write-Error "Could not identify WindowsDesktop.App shared framework version for $BaseSdkVersion" -ErrorAction Stop
+    }
+
+    $Destination = Join-Path (Join-path (Join-Path $InstallDir 'shared') 'Microsoft.WindowsDesktop.App') $WindowsDesktopFrameworkVersion
     Write-Verbose "Copying private binaries to $Destination..."
 
     $copyWpfBins = Join-Path (Join-Path (Split-Path -parent $ScriptLocation) 'CopyWpfBins') 'CopyWpfBins.ps1'
     if (-not (test-path -PathType Leaf -Path $copyWpfBins)) {
-        Write-Error "CopyWpfBins.ps1 not found"
+        Write-Error "CopyWpfBins.ps1 not found" -ErrorAction Stop
     }
 
     & $copyWpfBins -Configuration $Configuration -Platform $Platform -RepoRoot $RepoRoots -Destination $Destination
