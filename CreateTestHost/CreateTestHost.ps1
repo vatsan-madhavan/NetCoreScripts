@@ -19,6 +19,12 @@
 .PARAMETER NoPath
     When specified, the PATH environment variable is not exported/set after the creation of the test host. Specifying
     -DeleteStagingFiles has the same effect as -NoPath
+.PARAMETER NoZip
+    When specified, a zip file is not created
+.PARAMETER StagingRoot
+    This is the root-folder where a subfolder is created to build the test-host. Defaults to %TEMP%.
+.PARAMETER DestinationPath
+    This is the path of the final zip file. When not specified, a path under $StagingRoot is automatically chosen. 
 .EXAMPLE
     CreateTestHost.ps1 -BaseSdkVersion 3.1.100 -Configuration Release -Platform x64 -RepoRoots C:\src\repos\wpf,C:\src\repos\dotnet-wpf-int -DeleteStagingFiles
 
