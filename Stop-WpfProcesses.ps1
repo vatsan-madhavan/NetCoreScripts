@@ -76,6 +76,7 @@ $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
 Invoke-Expression "reg.exe ADD HKCU\Software\Sysinternals /v EulaAccepted /t REG_DWORD /d 1 /f" | Out-Null
 Invoke-Expression "reg.exe ADD HKU\.DEFAULT\Software\Sysinternals /v EulaAccepted /t REG_DWORD /d 1 /f" | Out-Null
 
+$listDLLs = join-path $env:TEMP "listDlls.exe"
 if (-not (test-path -PathType Leaf $listDlls)) {
     Kill-ChildProcessesByName -ProcessName ListDlls
     Remove-Item -Path $listDlls -Force
