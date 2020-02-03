@@ -77,7 +77,11 @@ param(
 
     Test-Path $_
   })]
-  $Destination
+  $Destination, 
+
+  [string][Alias('v')]
+  [Parameter(HelpMessage="Version number of the core-sdk build that is used as the 'base' for the target SDK", Mandatory=$true)]
+  $BaseSdkVersion
 )
 
 Function Write-ErrorMessage {
@@ -115,7 +119,8 @@ Function Copy-Binaries {
         [string]$RepoRoot,
         [string]$Destination,
         [string]$Configuration,
-        [string]$Platform
+        [string]$Platform,
+        [string]$SdkVersion
     )
     Write-Verbose "Repo Root: $RepoRoot"
     $basePath = Join-Path $RepoRoot "artifacts\packaging\$Configuration"
@@ -170,6 +175,42 @@ Function Copy-Binaries {
     }
 }
 
+Function Copy-Sdk {
+    param(
+        [string]$RepoRoot,
+        [string]$Destination,
+        [string]$Configuration,
+        [string]$Platform,
+        [string]$SdkVersion
+    )
+
+    Write-Verbose "Repo Root: $RepoRoot"
+    $basePath = Join-Path $RepoRoot "artifacts\packaging\$Configuration"
+    if ($Platform -eq 'x64') {
+        $basePath = Join-Path $basePath $Platform
+    }
+
+    $SdkSource = Join-Path $basePath 'Microsoft.NET.Sdk.WindowsDesktop'
+
+    Write-Verbose "Source: $SdkSource"
+
+    if (-not (Test-Path $SdkSource)) {
+        Write-Warning "$SdkSource doesn't exist - skipping"
+        return
+    }
+
+    
+    $SdkPath = (Get-Item $Destination).Parent.Parent.Parent.FullName
+    $SdkDestination = Join-Path (Join-Path (Join-Path (Join-Path $SdkPath 'sdk') $SdkVersion) 'Sdks') 'Microsoft.NET.Sdk.WindowsDesktop'
+    if (-not (Test-Path $SdkDestination)) {
+        Write-Warning "$SdkDestination doesn't exist - cannot copy files"
+        return
+    }
+
+    Write-Verbose "Copying SDK Files from $SdkSource to $SdkDestination"
+    Copy-Item -Path $SdkSource -Destination $SdkDestination -Recurse -Force
+}
+
 Function Fixup-AnyCPU {
     param(
         [string]$Platform
@@ -186,5 +227,8 @@ Write-Verbose "Destination: $Destination"
 $Platform = Fixup-AnyCPU -Platform $Platform
 
 $RepoRoot | % {
-    Copy-Binaries -RepoRoot $_ -Destination $Destination -Configuration $Configuration -Platform $Platform
+    Copy-Binaries -RepoRoot $_ -Destination $Destination -Configuration $Configuration -Platform $Platform -SdkVersion $BaseSdkVersion
+    Copy-Sdk -RepoRoot $_ -Destination $Destination -Configuration $Configuration -Platform $Platform -SdkVersion $BaseSdkVersion
 }
+
+

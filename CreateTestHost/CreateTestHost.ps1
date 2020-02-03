@@ -254,7 +254,7 @@ Try {
         Write-Error "CopyWpfBins.ps1 not found" -ErrorAction Stop
     }
 
-    & $copyWpfBins -Configuration $Configuration -Platform $Platform -RepoRoot $RepoRoots -Destination $Destination
+    & $copyWpfBins -Configuration $Configuration -Platform $Platform -RepoRoot $RepoRoots -Destination $Destination -BaseSdkVersion $BaseSdkVersion
 
     # Copy InstallMe.ps1 to $InstallDir
     $InstallMeScript = Join-Path $ScriptLocation 'InstallMe.ps1'
