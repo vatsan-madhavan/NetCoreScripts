@@ -1,4 +1,32 @@
-﻿Function Get-PSScriptLocationFullPath {
+﻿[CmdletBinding(PositionalBinding=$false)]
+param(
+  [bool]
+  [Parameter(HelpMessage="Overwrite target directory if it already exists; defaults to true")]
+  $OverWrite = $true,
+
+  [string]
+  [Parameter(HelpMessage="Target path where the test host will be 'installed'")]
+  [ValidateScript({
+    $directory = $_
+    if (Test-Path -PathType Container -Path $directory) {
+        if ($OverWrite) {
+            Write-Warning "$directory : Directory exists and contents will be overwritten"
+        } else {
+            Write-Error "$directory : Directory exists and cannot be overwritten"
+        }
+    } else {
+        New-Item -ItemType Directory -Path $directory
+    }
+
+    Test-Path -PathType Container -Path $directory
+  })]
+  $DestinationPath=$null,
+
+  [switch]
+  [Parameter(HelpMessage="Persist updates to PATH User Environment variable")]
+  $PersistPathUpdate
+)
+Function Get-PSScriptLocationFullPath {
     if ($psISE -ne $null) {
         return (Get-Item (Split-Path -parent $psISE.CurrentFile.FullPath)).FullName
     }
@@ -10,11 +38,11 @@ function Add-EnvPath {
     param(
         [string]$path, 
         [switch]$prepend = $false,
-        [switch]$emitAzPipelineLogCommand = $false 
+        [switch]$emitAzPipelineLogCommand = $false, 
+        [switch]$persist = $false
     )
 
-    
-    [string]$envPath = $env:Path.ToLowerInvariant()
+    $envPath = ([Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)).ToLowerInvariant()
     if (-not $path.EndsWith('\')) {
         $path += '\'
     }
@@ -42,6 +70,10 @@ function Add-EnvPath {
     }
 
     $env:Path = $envPath
+    if ($persist) {
+        Write-Verbose "Persisting update to PATH User environment variable"
+        [Environment]::SetEnvironmentVariable("Path", $envPath, [System.EnvironmentVariableTarget]::User)
+    }
 
     if ($emitAzPipelineLogCommand) {
         if ($prepend) {
@@ -54,10 +86,23 @@ function Add-EnvPath {
     Write-Verbose "Added $path to PATH variable"
 }
 
-$TestHostLocation = Get-PSScriptLocationFullPath
+$ScriptRoot = Get-PSScriptLocationFullPath
+Write-Verbose "Script Root is at $ScriptRoot"
+if ($DestinationPath -eq $null) {
+    $TestHostLocation = $ScriptRoot
+} else {
+    # Copy the TestHost SDK over to the target location
+    Write-Verbose "Copying TestHost to $DestinationPath"
+    Get-ChildItem -Path $ScriptRoot -Exclude "InstallMe.ps1*" | % {
+        Copy-Item -Recurse -Path $_ -Destination $DestinationPath -Container -Force
+    }
+
+    $TestHostLocation = $DestinationPath
+}
+
 Write-Verbose "TestHost Location: $TestHostLocation"
 
-Add-EnvPath -path $TestHostLocation -prepend -emitAzPipelineLogCommand
+Add-EnvPath -path $TestHostLocation -prepend -emitAzPipelineLogCommand -persist:$PersistPathUpdate
 
 <#
     Emit the right signals to Azure Pipelines about 
