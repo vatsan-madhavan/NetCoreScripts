@@ -208,7 +208,9 @@ Function Copy-Sdk {
     }
 
     Write-Verbose "Copying SDK Files from $SdkSource to $SdkDestination"
-    Copy-Item -Path $SdkSource -Destination $SdkDestination -Recurse -Force
+    Get-ChildItem -Path $SdkSource | % {
+        Copy-Item -Path $_.FullName -Destination $SdkDestination -Recurse -Force -Verbose:$Verbose
+    }
 }
 
 Function Fixup-AnyCPU {
