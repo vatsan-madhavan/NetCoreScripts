@@ -137,8 +137,10 @@ Function Copy-Binaries {
 
     [bool]$success = $false 
 
+    $PackageNameSuffix = if ($Configuration -ieq 'Debug') { '.Debug' } else { [string]::Empty }
+
     Get-ChildItem -Directory -Filter Microsoft.DotNet.Wpf.* -Path $basePath | Where-Object {
-        $_.Name -ieq 'Microsoft.DotNet.Wpf.GitHub' -or $_.Name -ieq 'Microsoft.DotNet.Wpf.DncEng'
+        $_.Name -ieq "Microsoft.DotNet.Wpf.GitHub$PackageNameSuffix" -or $_.Name -ieq "Microsoft.DotNet.Wpf.DncEng$PackageNameSuffix"
     } | % {
         Get-ChildItem -Directory $_.FullName
     } | ? {
@@ -184,13 +186,15 @@ Function Copy-Sdk {
         [string]$SdkVersion
     )
 
+    $PackageNameSuffix = if ($Configuration -ieq 'Debug') { '.Debug' } else { [string]::Empty }
+
     Write-Verbose "Repo Root: $RepoRoot"
     $basePath = Join-Path $RepoRoot "artifacts\packaging\$Configuration"
     if ($Platform -eq 'x64') {
         $basePath = Join-Path $basePath $Platform
     }
 
-    $SdkSource = Join-Path $basePath 'Microsoft.NET.Sdk.WindowsDesktop'
+    $SdkSource = Join-Path $basePath "Microsoft.NET.Sdk.WindowsDesktop$PackageNameSuffix"
 
     Write-Verbose "Source: $SdkSource"
 
