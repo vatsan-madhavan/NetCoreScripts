@@ -140,7 +140,11 @@ Function Copy-Binaries {
     $PackageNameSuffix = if ($Configuration -ieq 'Debug') { '.Debug' } else { [string]::Empty }
 
     Get-ChildItem -Directory -Filter Microsoft.DotNet.Wpf.* -Path $basePath | Where-Object {
-        $_.Name -ieq "Microsoft.DotNet.Wpf.GitHub$PackageNameSuffix" -or $_.Name -ieq "Microsoft.DotNet.Wpf.DncEng$PackageNameSuffix"
+        # Some branches use $PackageNameSuffix, others don't - test both ways
+        $_.Name -ieq "Microsoft.DotNet.Wpf.GitHub$PackageNameSuffix" -or 
+        $_.Name -ieq "Microsoft.DotNet.Wpf.GitHub"                   -or 
+        $_.Name -ieq "Microsoft.DotNet.Wpf.DncEng$PackageNameSuffix" -or 
+        $_.Name -ieq "Microsoft.DotNet.Wpf.DncEng"
     } | % {
         Get-ChildItem -Directory $_.FullName
     } | ? {
@@ -195,19 +199,23 @@ Function Copy-Sdk {
     }
 
     $SdkSource = Join-Path $basePath "Microsoft.NET.Sdk.WindowsDesktop$PackageNameSuffix"
+    $FallbackSdkSource = Join-Path $basePath "Microsoft.NET.Sdk.WindowsDesktop"
 
     Write-Verbose "Source: $SdkSource"
 
-    if (-not (Test-Path $SdkSource)) {
-        Write-Warning "$SdkSource doesn't exist - skipping"
+    if (-not (Test-Path $SdkSource) -and -not (Test-Path $FallbackSdkSource)) {
+        Write-Warning "Source $SdkSource and fallback source ($FallbackSdkSource) doesn't exist - skipping"
         return
     }
 
+    if (-not (Test-Path $SdkSource)) {
+        $SdkSource = $FallbackSdkSource
+    }
     
     $SdkPath = (Get-Item $Destination).Parent.Parent.Parent.FullName
     $SdkDestination = Join-Path (Join-Path (Join-Path (Join-Path $SdkPath 'sdk') $SdkVersion) 'Sdks') 'Microsoft.NET.Sdk.WindowsDesktop'
     if (-not (Test-Path $SdkDestination)) {
-        Write-Warning "$SdkDestination doesn't exist - cannot copy files"
+        Write-Warning "Destination $SdkDestination doesn't exist - cannot copy files"
         return
     }
 
