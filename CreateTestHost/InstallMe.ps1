@@ -7,18 +7,21 @@ param(
   [string]
   [Parameter(HelpMessage="Target path where the test host will be 'installed'")]
   [ValidateScript({
-    $directory = $_
-    if (Test-Path -PathType Container -Path $directory) {
-        if ($OverWrite) {
-            Write-Warning "$directory : Directory exists and contents will be overwritten"
+    [string]$directory = $_
+    if ($directory) {
+        if (Test-Path -PathType Container -Path $directory) {
+            if ($OverWrite) {
+                Write-Warning "$directory : Directory exists and contents will be overwritten"
+            } else {
+                Write-Error "$directory : Directory exists and cannot be overwritten"
+            }
         } else {
-            Write-Error "$directory : Directory exists and cannot be overwritten"
+            Write-Verbose "Creating directory $directory"
+            New-Item -ItemType Directory -Path $directory
         }
-    } else {
-        New-Item -ItemType Directory -Path $directory
     }
 
-    Test-Path -PathType Container -Path $directory
+    ($directory -eq $null) -or (Test-Path -PathType Container -Path $directory)
   })]
   $DestinationPath=$null,
 
@@ -88,7 +91,7 @@ function Add-EnvPath {
 
 $ScriptRoot = Get-PSScriptLocationFullPath
 Write-Verbose "Script Root is at $ScriptRoot"
-if ($DestinationPath -eq $null) {
+if (-not $DestinationPath) {
     $TestHostLocation = $ScriptRoot
 } else {
     # Copy the TestHost SDK over to the target location
