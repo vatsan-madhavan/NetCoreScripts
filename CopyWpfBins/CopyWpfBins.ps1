@@ -113,6 +113,15 @@ Function Write-ErrorMessage {
       $Host.UI.WriteErrorLine($errorMessage)
 }
 
+Function Find-RoboCopy {
+    $roboCopyCmd = Get-Command robocopy -ErrorAction SilentlyContinue
+    if (-not $roboCopy) {
+        $roboCopyCmd = get-command (join-path (get-item $env:ComSpec).DirectoryName 'robocopy.exe')
+    }
+
+    $roboCopyCmd.Source
+}
+
 Function RoboCopy-Folder {
     param(
         [Parameter(Mandatory=$true)]
@@ -137,7 +146,8 @@ Function RoboCopy-Folder {
         $options += " /NFL"
     }
 
-    Invoke-Expression -Command "robocopy $Source $Destination $options"
+    $robocopy = Find-RoboCopy
+    Invoke-Expression -Command "$robocopy $Source $Destination $options"
 }
 
 Function RoboCopy-File {
@@ -168,7 +178,8 @@ Function RoboCopy-File {
     $targetFile = [System.IO.Path]::GetFileName($Destination)  
     
     if ($fileName -ieq $targetFile) {
-        Invoke-Expression -Command "robocopy $sourceDir $targetDir $fileName $options"
+        $roboCopy = Find-RoboCopy
+        Invoke-Expression -Command "$roboCopy $sourceDir $targetDir $fileName $options"
     } else {
         Copy-Item -Path $Source -Destination $Destination
     }
