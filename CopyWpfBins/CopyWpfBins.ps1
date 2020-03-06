@@ -113,6 +113,60 @@ Function Write-ErrorMessage {
       $Host.UI.WriteErrorLine($errorMessage)
 }
 
+Function RoboCopy-Folder {
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path -Path $_ -PathType Container })]
+        [string]$Source,
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path -Path $_ -PathType Container })]
+        [string]$Destination
+    )
+
+    $options = "/E"
+    $options += " /NDL /NJH /NJS /NP /NS /NC"
+    if ($VerbosePreference -ine 'SilentlyContinue') {
+        $options += " /V"
+    } else {
+        $options += " /NFL"
+    }
+
+    Invoke-Expression -Command "robocopy $Source $Destination $options"
+}
+
+Function RoboCopy-File {
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path -Path $_ -PathType Leaf})]
+        [string]$Source,
+        [Parameter(Mandatory=$true)]
+        [string]$Destination
+    )
+
+    $options = ""
+    $options += " /NDL /NJH /NJS /NP /NS /NC"
+    if ($VerbosePreference -ine 'SilentlyContinue') {
+        $options += " /V"
+    } else {
+        $options += " /NFL"
+    }
+
+    $sourceDir = (Get-Item $Source).Directory.FullName
+    $fileName = (Get-Item $Source).Name
+
+    $targetDir = [System.IO.Path]::GetDirectoryName($Destination)
+    if (-not (Test-Path -Path $targetDir -PathType Container)) {
+        New-Item -Path $targetDir -ItemType Directory
+    }
+
+    $targetFile = [System.IO.Path]::GetFileName($Destination)  
+    
+    if ($fileName -ieq $targetFile) {
+        Invoke-Expression -Command "robocopy $sourceDir $targetDir $fileName $options"
+    } else {
+        Copy-Item -Path $Source -Destination $Destination
+    }
+}
 
 Function Copy-Binaries {
     param(
@@ -157,8 +211,17 @@ Function Copy-Binaries {
         if ($_.Name -ilike "netcoreapp*") {
             Get-ChildItem -Path $_.FullName | % {
                 $source = $_.FullName
-                Write-Verbose "Copy-Item $source $Destination -Recurse -Force"
-                Copy-Item $source $Destination -Recurse -Force
+                
+                if (Test-Path -Path $source -PathType Container) {
+                    $dest = Join-Path $Destination (Get-Item $source).Name
+                    Write-Verbose "RoboCopy-Folder $source $dest"
+                    RoboCopy-Folder -Source $source -Destination $dest
+                } else {
+                    $dest = Join-Path $Destination (Get-Item $source).Name
+                    Write-Verbose "RoboCopy-File $source $dest"
+                    RoboCopy-File -Source $source -Destination $dest
+                }
+
                 $success = $true 
             }
         } else { 
@@ -168,8 +231,10 @@ Function Copy-Binaries {
             } | % {
                 Get-ChildItem -Path $_.FullName | % {
                     $source = $_.FullName
-                    Write-Verbose "Copy-Item $source $Destination -Recurse -Force"
-                    Copy-Item $source $Destination -Recurse -Force
+                    $dest = Join-Path $Destination (Get-Item $source).Name
+
+                    Write-Verbose "RoboCopy-Folder $source $dest"
+                    RoboCopy-Folder -Source $source -Destination $dest
                     $success = $true 
                 }
             }
@@ -221,7 +286,7 @@ Function Copy-Sdk {
 
     Write-Verbose "Copying SDK Files from $SdkSource to $SdkDestination"
     Get-ChildItem -Path $SdkSource | % {
-        Copy-Item -Path $_.FullName -Destination $SdkDestination -Recurse -Force -Verbose:$Verbose
+        RoboCopy-Folder -Source $_.FullName -Destination $SdkDestination -Verbose:$Verbose
     }
 }
 
