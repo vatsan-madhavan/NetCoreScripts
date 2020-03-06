@@ -444,7 +444,7 @@ Function Main {
     $knownFrameworkReferences | % {
         $frameworkName = $_.Node.RuntimeFrameworkName
         if ($runtimes -icontains $frameworkName) {
-            $frameworkVersion = $_.Node.DefaultRuntimeFrameworkVersion 
+            $frameworkVersion = $_.Node.LatestRuntimeFrameworkVersion 
 
             if ($_.Node.Attributes["Profile"] -ne $null) {
                 $profileName = $_.Node.Attributes["Profile"].Value
