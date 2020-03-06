@@ -119,7 +119,13 @@ Function RoboCopy-Folder {
         [ValidateScript({Test-Path -Path $_ -PathType Container })]
         [string]$Source,
         [Parameter(Mandatory=$true)]
-        [ValidateScript({Test-Path -Path $_ -PathType Container })]
+        [ValidateScript({
+            if (-not (Test-Path $_)) {
+                New-Item -Path $_ -ItemType Directory
+            }
+            
+            -not (Test-Path -Path $_ -PathType Leaf)
+        })]
         [string]$Destination
     )
 
@@ -285,9 +291,7 @@ Function Copy-Sdk {
     }
 
     Write-Verbose "Copying SDK Files from $SdkSource to $SdkDestination"
-    Get-ChildItem -Path $SdkSource | % {
-        RoboCopy-Folder -Source $_.FullName -Destination $SdkDestination -Verbose:$Verbose
-    }
+    RoboCopy-Folder -Source $SdkSource -Destination $SdkDestination -Verbose:$Verbose
 }
 
 Function Fixup-AnyCPU {
