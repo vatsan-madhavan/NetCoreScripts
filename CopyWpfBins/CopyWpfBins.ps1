@@ -248,10 +248,16 @@ Function Copy-Binaries {
             } | % {
                 Get-ChildItem -Path $_.FullName | % {
                     $source = $_.FullName
-                    $dest = Join-Path $Destination (Get-Item $source).Name
+                    if (Test-Path -Path $source -PathType Container) {
+                        $dest = Join-Path $dest (Get-Item $source).Name
+                        Write-Verbose "RoboCopy-Folder $source $dest"
+                        RoboCopy-Folder -Soruce $source -Destination $dest
+                    } else {
+                        $dest = Join-Path $Destination (Get-Item $source).Name
+                        Write-Verbose "RoboCopy-File $source $dest"
+                        RoboCopy-File -Source $source -Destination $dest
+                    }
 
-                    Write-Verbose "RoboCopy-Folder $source $dest"
-                    RoboCopy-Folder -Source $source -Destination $dest
                     $success = $true 
                 }
             }
