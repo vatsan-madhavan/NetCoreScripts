@@ -6,8 +6,6 @@ param (
     [ValidateScript({$_ -ne $null})]
     [string[]]$AdditionalBuildProcesses = @(), 
 
-    [switch]$KillBuildProcesses, 
-
     [switch]$DryRun
 )
 
@@ -52,7 +50,6 @@ Function Kill-ChildProcessesByName {
     }
 }
 
-
 Function Get-PSScriptLocationFullPath {
     if ($psISE -ne $null) {
         return (Get-Item (Split-Path -parent $psISE.CurrentFile.FullPath)).FullName
@@ -66,35 +63,6 @@ Import-Module (Join-Path (Join-Path (Get-Item (Get-PSScriptLocationFullPath)).Pa
 Use-PowershellCore7 -args $script:MyInvocation.Line -Verbose:$VerbosePreference
 
 
-<#
-Set GIT_ASK_YESNO=false to prevent interactive
-Q&A from git like "Unlink of file '.vs/foo' failed. Should I try again? (y/n)"
-
-GIT_ASK_YESNO is defined at 
-https://github.com/git/git/blob/d62dad7a7dca3f6a65162bf0e52cdf6927958e78/compat/mingw.c#L188
-No documentation as far as I can tell
-
-Call to setlocal earlier would ensure that this setting is local to 
-the lifetime of this batch-file's execution
-#>
-$env:GIT_ASK_YESNO = 'false'
-
-if ($KillBuildProcesses) {
-    ($BuildProcesses + $AdditionalBuildProcesses) | % {
-        Kill-ChildProcessesByName -ProcessName $_ -DryRun:$DryRun
-    }
-}
-
-$cleanCommand = "git clean -xdf"
-
-if ($DryRun) {
-    $cleanCommand += " --dry-run"
-}
-
-Write-Host "Cleaning git enlistment: $cleanCommand ..."
-
-$gitOutput = Invoke-Expression -Command $cleanCommand | Out-String 
-$gitOutput -split '\r?\n' | % {
-    Write-Host "`t" -NoNewline
-    Write-Host $_
+($BuildProcesses + $AdditionalBuildProcesses) | % {
+	Kill-ChildProcessesByName -ProcessName $_ -DryRun:$DryRun
 }
