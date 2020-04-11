@@ -45,7 +45,19 @@ function Add-EnvPath {
         [switch]$persist = $false
     )
 
-    $envPath = ([Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)).ToLowerInvariant()
+	<# 
+		Treat $env:PATH and Environment::GetEnvironmentVariable("Path" EnvironmentVariableTarget::User) as distinct namespaces,
+		and process them independently
+	#>
+		
+    $userEnvPath = ([Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)).ToLowerInvariant()
+	$envPath = $env:Path 
+	
+	Write-Verbose "User Environment Path"
+	$userEnvPath.Split(';') | % {
+		Write-Verbose ("`t" + $_)
+	}
+	
     if (-not $path.EndsWith('\')) {
         $path += '\'
     }
@@ -65,24 +77,44 @@ function Add-EnvPath {
     } elseif ($path.Contains($path.TrimEnd('\'))) {                   <# path\to\dir   #>
         $envPath = $envPath.Replace($path.TrimEnd('\'), '')
     }
+	
+	if ($userEnvPath.Contains("$path;")) {                                <# path\to\dir\; #>
+        $userEnvPath = $userEnvPath.Replace("$path;", '')
+    } elseif ($userEnvPath.Contains($path)) {                             <# path\to\dir\  #>
+        $userEnvPath = $userEnvPath.Replace($path, '')
+    } elseif ($path.Contains($path.TrimEnd('\') + ";")) {             <# path\to\dir;  #>
+        $userEnvPath = $userEnvPath.Replace($path.TrimEnd('\') + ";", '')
+    } elseif ($path.Contains($path.TrimEnd('\'))) {                   <# path\to\dir   #>
+        $userEnvPath = $userEnvPath.Replace($path.TrimEnd('\'), '')
+    }
+	
+	Write-Verbose "Sanitized Environment Paths"
+	$userEnvPath.Split(';') | % {
+		Write-Verbose ("`t" + $_)
+	}
 
     if ($prepend) {
         $envPath = "$path;" + $envPath
+		$userEnvPath = "$path;" + $userEnvPath
     } else {
         $envPath += ";$path"
+		$userEnvPath += ";$path"
     }
 
     $env:Path = $envPath
     if ($persist) {
         Write-Verbose "Persisting update to PATH User environment variable"
-        [Environment]::SetEnvironmentVariable("Path", $envPath, [System.EnvironmentVariableTarget]::User)
+		$userEnvPath.Split(';') | % {
+			Write-Verbose ("`t" + $_)
+		}
+        [Environment]::SetEnvironmentVariable("Path", $userEnvPath, [System.EnvironmentVariableTarget]::User)
     }
 
     if ($emitAzPipelineLogCommand) {
         if ($prepend) {
             Write-Host "##vso[task.prependpath]$path"
         } else {
-            Write-Host "##vso[task.setvariable variable=PATH]$envPath"
+            Write-Host "##vso[task.setvariable variable=PATH]$userEnvPath"
         }
     }
 
@@ -113,6 +145,8 @@ Add-EnvPath -path $TestHostLocation -prepend -emitAzPipelineLogCommand -persist:
 #>
 Write-Host "##vso[task.setvariable variable=DOTNET_MULTILEVEL_LOOKUP]0"
 Write-Host "##vso[task.setvariable variable=DOTNET_SKIP_FIRST_TIME_EXPERIENCE]1"
+Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]$TestHostLocation"
 
 $env:DOTNET_MULTILEVEL_LOOKUP = 0
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = 1
+$env:DOTNET_ROOT=$TestHostLocation
