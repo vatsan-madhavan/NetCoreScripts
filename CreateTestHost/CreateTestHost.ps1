@@ -55,15 +55,7 @@ param(
   [string[]][Alias('r')]
   [Parameter(HelpMessage='Root of one or more repositories, separated by commas', Mandatory=$true)]
   [ValidateScript({
-    $exists = $true
-    $_ | % { 
-      if (-not (Test-Path $_)) {
-        $exists = $false
-        Write-Warning "$_ doesn't exist"
-      }
-    }
-
-    $exists
+    $false -ne ($_ | Test-Path | Where-Object { -not $_} | Select-Object -First 1)
   })]
   $RepoRoots, 
 
@@ -113,95 +105,11 @@ function New-TemporaryDirectory {
 }
 
 Function Get-PSScriptLocationFullPath {
-    if ($psISE -ne $null) {
+    if ($null -ne $psISE) {
         return (Get-Item (Split-Path -parent $psISE.CurrentFile.FullPath)).FullName
     }
 
     (Get-Item $PSScriptRoot).FullName
-}
-
-function Add-EnvPath {
-    param(
-        [string]$path, 
-        [switch]$prepend = $false,
-        [switch]$emitAzPipelineLogCommand = $false, 
-        [switch]$persist = $false
-    )
-
-	<# 
-		Treat $env:PATH and Environment::GetEnvironmentVariable("Path" EnvironmentVariableTarget::User) as distinct namespaces,
-		and process them independently
-	#>
-		
-    $userEnvPath = ([Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)).ToLowerInvariant()
-	$envPath = $env:Path 
-	
-	Write-Verbose "User Environment Path"
-	$userEnvPath.Split(';') | % {
-		Write-Verbose ("`t" + $_)
-	}
-	
-    if (-not $path.EndsWith('\')) {
-        $path += '\'
-    }
-
-    <# 
-        Remove any previous instance of $path from 
-        $env:Path 
-
-        Try from longest to shortest possible combination
-    #>
-    if ($envPath.Contains("$path;")) {                                <# path\to\dir\; #>
-        $envPath = $envPath.Replace("$path;", '')
-    } elseif ($envPath.Contains($path)) {                             <# path\to\dir\  #>
-        $envPath = $envPath.Replace($path, '')
-    } elseif ($path.Contains($path.TrimEnd('\') + ";")) {             <# path\to\dir;  #>
-        $envPath = $envPath.Replace($path.TrimEnd('\') + ";", '')
-    } elseif ($path.Contains($path.TrimEnd('\'))) {                   <# path\to\dir   #>
-        $envPath = $envPath.Replace($path.TrimEnd('\'), '')
-    }
-	
-	if ($userEnvPath.Contains("$path;")) {                                <# path\to\dir\; #>
-        $userEnvPath = $userEnvPath.Replace("$path;", '')
-    } elseif ($userEnvPath.Contains($path)) {                             <# path\to\dir\  #>
-        $userEnvPath = $userEnvPath.Replace($path, '')
-    } elseif ($path.Contains($path.TrimEnd('\') + ";")) {             <# path\to\dir;  #>
-        $userEnvPath = $userEnvPath.Replace($path.TrimEnd('\') + ";", '')
-    } elseif ($path.Contains($path.TrimEnd('\'))) {                   <# path\to\dir   #>
-        $userEnvPath = $userEnvPath.Replace($path.TrimEnd('\'), '')
-    }
-	
-	Write-Verbose "Sanitized Environment Paths"
-	$userEnvPath.Split(';') | % {
-		Write-Verbose ("`t" + $_)
-	}
-
-    if ($prepend) {
-        $envPath = "$path;" + $envPath
-		$userEnvPath = "$path;" + $userEnvPath
-    } else {
-        $envPath += ";$path"
-		$userEnvPath += ";$path"
-    }
-
-    $env:Path = $envPath
-    if ($persist) {
-        Write-Verbose "Persisting update to PATH User environment variable"
-		$userEnvPath.Split(';') | % {
-			Write-Verbose ("`t" + $_)
-		}
-        [Environment]::SetEnvironmentVariable("Path", $userEnvPath, [System.EnvironmentVariableTarget]::User)
-    }
-
-    if ($emitAzPipelineLogCommand) {
-        if ($prepend) {
-            Write-Host "##vso[task.prependpath]$path"
-        } else {
-            Write-Host "##vso[task.setvariable variable=PATH]$userEnvPath"
-        }
-    }
-
-    Write-Verbose "Added $path to PATH variable"
 }
 
 <#
@@ -221,7 +129,7 @@ Function Write-Color {
 
     $m = [regex]::Match($text, "(?:(\s+|\S+))+")
     if ($m -and $m.Groups.Count -eq 2) {
-        $m.Groups[1].Captures | % {
+        $m.Groups[1].Captures | ForEach-Object {
             $colorName = $null 
 
             [System.Text.RegularExpressions.Capture]$capture = $_
@@ -239,6 +147,139 @@ Function Write-Color {
         }
         
         Write-Host
+    }
+}
+
+Function Get-RuntimePacks {
+    [CmdletBinding(PositionalBinding=$false)]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]
+        $BaseSdkVersion,
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({
+            Test-Path -PathType Leaf (Join-Path $_ 'dotnet.exe')
+        })]
+        [string]$InstallDir,
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({
+            New-Item -Force -ItemType Directory $_ | Out-Null
+            Test-Path -Pathtype Container -Path $_
+        })]
+        [string]$RuntimePacksDir
+    )
+ 
+    $temp = Join-Path $InstallDir '.temp'
+    New-Item -Force -ItemType Directory $temp 
+
+    $oldNugetCache = $env:NUGET_PACKAGES
+    $env:NUGET_PACKAGES = $RuntimePacksDir 
+    try {
+        $dotnet = Join-Path $InstallDir 'dotnet.exe'
+        $globalJson = Join-Path $temp 'global.json'
+        $proj = Join-Path $temp 'wpf.csproj'
+
+        Write-Verbose "$dotnet new globaljson --force --output $globalJson"
+        . $dotnet new globaljson --force --sdk-version $BaseSdkVersion --output $globalJson
+
+        Write-Verbose "$dotnet new wpf --force --output $proj"
+        . $dotnet new wpf --force --output $proj
+
+        Write-Verbose "$dotnet publish --runtime win-x64 $proj"
+        . $dotnet publish --runtime win-x64 $proj
+
+        Write-Verbose "$dotnet publish --runtime win-x86 $proj"
+        . $dotnet publish --runtime win-x86 $proj
+    }
+    finally {
+        $env:NUGET_PACKAGES = $oldNugetCache
+        Remove-Item -Recurse -Force $temp
+    }
+}
+
+function Update-RuntimePacksCache {
+    [CmdletBinding(PositionalBinding=$false)]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]
+        [ValidateSet('Debug', 'Release')]
+        $Configuration,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('x86', 'x64')]
+        [string]
+        $Platform,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({
+            $paths = $_
+            $false -ne ($paths | Test-Path | Where-Object { -not $_ } | Select-Object -First 1)
+        })]
+        [string[]]
+        $RepoRoots,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path -PathType Container -Path $_})]
+        [string]
+        $RuntimePacksDir
+    )
+    
+    $RuntimeIdentifier = "win-$Platform"
+    $DestinationRoot = Join-Path $RuntimePacksDir "microsoft.windowsdesktop.app.runtime.$RuntimeIdentifier"
+    $frameworkCount = Get-ChildItem -Path $DestinationRoot | Measure-Object 
+    if ($frameworkCount.Count -ne 1) {
+        Write-Error "Too many frameworks" -ErrorAction Stop
+    }
+    $DestinationRoot = Join-Path $DestinationRoot (Get-ChildItem $DestinationRoot)[0].Name
+    $DestinationRoot = Join-Path $DestinationRoot 'runtimes'
+    $DestinationRoot = Join-Path $DestinationRoot $RuntimeIdentifier
+
+    Write-Verbose "Destination Root: $DestinationRoot"
+
+    $targetTfm = (Get-ChildItem (Join-Path $DestinationRoot 'lib') 'netcoreapp*')[0].Name
+    Write-Verbose "Destination TFM: $targetTfm"
+
+    $RepoRoots | ForEach-Object {
+        $RepoRoot = $_
+        
+        $Source = Join-Path $RepoRoot -ChildPath "artifacts\packaging\$Configuration"
+        if ($Platform -ieq 'x64') {
+            $Source = Join-path $Source $Platform
+        }
+
+        # Try each of the possible transport-package names
+        $TransportPackageNames = @(
+            'Microsoft.DotNet.Wpf.GitHub', 
+            'Microsoft.DotNet.Wpf.GitHub.Debug', 
+            'Microsoft.DotNet.Wpf.DncEng', 
+            'Microsoft.DotNet.Wpf.DncEng.Debug' )
+
+        $TransportPackageNames | ForEach-Object {
+            $TransportPackageName = $_
+            $PackageRoot = Join-path $Source $TransportPackageName
+            Write-Verbose "Trying Transport Package Location $PackageRoot..."
+            if (-not (Test-Path -PathType Container $PackageRoot)) {
+                Write-Verbose "`t$PackageRoot not found..."
+                return # continue enclosing ForEach-Object loop
+            }
+            $sourceTfm = (Get-ChildItem (Join-Path $PackageRoot 'lib') 'netcoreapp*')[0].Name
+            Write-Verbose "Source TFM is $sourceTfm"
+            if ($sourceTfm -ieq $targetTfm) {
+                Write-Verbose "`tCopying.."
+                Write-Verbose "`t $PackageRoot\lib -> $DestinationRoot\lib"
+                Copy-Item `
+                    -Recurse `
+                    -Force `
+                    -Path (Join-path $PackageRoot 'lib\*') `
+                    -Destination (Join-Path $DestinationRoot 'lib')
+                Write-Verbose "`t$PackageRoot\runtimes\$RuntimeIdentifier\native -> $DestinationRoot\native"
+                Copy-Item `
+                    -Recurse `
+                    -Force `
+                    -Path (Join-Path $PackageRoot "runtimes\$RuntimeIdentifier\native\*")`
+                    -Destination (Join-path $DestinationRoot "native")
+            }
+        }
     }
 }
 
@@ -292,6 +333,24 @@ Try {
 
     & $copyWpfBins -Configuration $Configuration -Platform $Platform -RepoRoot $RepoRoots -Destination $Destination -BaseSdkVersion $BaseSdkVersion -Verbose:$Verbose
 
+    $RuntimePacksDir = Join-Path $InstallDir '.runtimepacks'
+
+    Get-RuntimePacks `
+        -BaseSdkVersion $BaseSdkVersion `
+        -InstallDir $InstallDir `
+        -RuntimePacksDir $RuntimePacksDir
+
+    @('x86', 'x64') | ForEach-Object {
+        Write-Verbose ("Updating Runtime Packs Cache for Platform " + $_)
+        Update-RuntimePacksCache `
+        -Configuration $Configuration `
+        -Platform $_ `
+        -RepoRoots $RepoRoots `
+        -RuntimePacksDir $RuntimePacksDir
+    }
+
+    # TODO: Update InstallMe.ps1 and local updater scripts to redirect nuget cache
+
     # Copy InstallMe.ps1 to $InstallDir
     $InstallMeScript = Join-Path $ScriptLocation 'InstallMe.ps1'
     if (Test-Path -PathType Leaf -Path $InstallMeScript) {
@@ -299,7 +358,17 @@ Try {
         Write-Verbose "Copied $InstallMeScript to $InstallDir"
     }
 
-    $RepoList = ($RepoRoots | % {'[Cyan]'+$_ }) -join ', '
+    # Copy EnvPaths\EnvPaths.psm1 to $InsallDir\EnvPaths
+    $EnvPathsModule = Join-Path (Get-Item $ScriptLocation).Parent.FullName 'EnvPaths\EnvPaths.psm1'
+    if (Test-Path -PathType Leaf -Path $EnvPathsModule) {
+        if (-not (Test-Path (Join-Path $InstallDir 'EnvPaths'))) {
+            New-Item -Path (Join-Path $InstallDir 'EnvPaths') -ItemType Directory -Force
+        }
+        Copy-Item -Path $EnvPathsModule -Destination (Join-Path $InstallDir 'EnvPaths') -Force
+        Write-Verbose "Copied $EnvPathsModule to $InstallDir\EnvPaths"
+    }
+
+    $RepoList = ($RepoRoots | ForEach-Object {'[Cyan]'+ $_ }) -join ', '
 
     Write-Host 
     Write-Color "Test Host Created at [Yellow]$InstallDir from .NET Core [Yellow]$BaseSdkVersion [Yellow]$Platform SDK from $RepoList [Yellow]$Configuration binaries"
@@ -334,19 +403,7 @@ Try {
     }
     
     if ((-not $DoNotExportPathEnv) -and (-not $DeleteStagingFiles) -and (Test-Path -PathType Container -Path $InstallDir)) {
-        Add-EnvPath -path $InstallDir -prepend -emitAzPipelineLogCommand
-
-        <#
-           Emit the right signals to Azure Pipelines about 
-           updating env vars
-        #>
-        Write-Host "##vso[task.setvariable variable=DOTNET_MULTILEVEL_LOOKUP]0"
-        Write-Host "##vso[task.setvariable variable=DOTNET_SKIP_FIRST_TIME_EXPERIENCE]1"
-		Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]$InstallDir"
-
-        $env:DOTNET_MULTILEVEL_LOOKUP = 0
-        $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = 1
-		$env:DOTNET_ROOT = $InstallDir
+        . $InstallMeScript
     }
 }
 Finally {

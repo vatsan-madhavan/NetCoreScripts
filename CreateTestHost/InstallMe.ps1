@@ -30,105 +30,71 @@ param(
   $PersistPathUpdate
 )
 Function Get-PSScriptLocationFullPath {
-    if ($psISE -ne $null) {
+    if ($null -ne $psISE) {
         return (Get-Item (Split-Path -parent $psISE.CurrentFile.FullPath)).FullName
     }
 
     (Get-Item $PSScriptRoot).FullName
 }
 
-function Add-EnvPath {
-    param(
-        [string]$path, 
-        [switch]$prepend = $false,
-        [switch]$emitAzPipelineLogCommand = $false, 
-        [switch]$persist = $false
+
+function Update-EnvPath {
+    [CmdletBinding(PositionalBinding=$false)]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+        [switch]$Persist
     )
 
-	<# 
-		Treat $env:PATH and Environment::GetEnvironmentVariable("Path" EnvironmentVariableTarget::User) as distinct namespaces,
-		and process them independently
-	#>
-		
-    $userEnvPath = ([Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)).ToLowerInvariant()
-	$envPath = $env:Path 
-	
-	Write-Verbose "User Environment Path"
-	$userEnvPath.Split(';') | % {
-		Write-Verbose ("`t" + $_)
-	}
-	
-    if (-not $path.EndsWith('\')) {
-        $path += '\'
-    }
+    $Path = $Path.TrimEnd('\')
 
-    <# 
-        Remove any previous instance of $path from 
-        $env:Path 
-
-        Try from longest to shortest possible combination
-    #>
-    if ($envPath.Contains("$path;")) {                                <# path\to\dir\; #>
-        $envPath = $envPath.Replace("$path;", '')
-    } elseif ($envPath.Contains($path)) {                             <# path\to\dir\  #>
-        $envPath = $envPath.Replace($path, '')
-    } elseif ($path.Contains($path.TrimEnd('\') + ";")) {             <# path\to\dir;  #>
-        $envPath = $envPath.Replace($path.TrimEnd('\') + ";", '')
-    } elseif ($path.Contains($path.TrimEnd('\'))) {                   <# path\to\dir   #>
-        $envPath = $envPath.Replace($path.TrimEnd('\'), '')
-    }
-	
-	if ($userEnvPath.Contains("$path;")) {                                <# path\to\dir\; #>
-        $userEnvPath = $userEnvPath.Replace("$path;", '')
-    } elseif ($userEnvPath.Contains($path)) {                             <# path\to\dir\  #>
-        $userEnvPath = $userEnvPath.Replace($path, '')
-    } elseif ($path.Contains($path.TrimEnd('\') + ";")) {             <# path\to\dir;  #>
-        $userEnvPath = $userEnvPath.Replace($path.TrimEnd('\') + ";", '')
-    } elseif ($path.Contains($path.TrimEnd('\'))) {                   <# path\to\dir   #>
-        $userEnvPath = $userEnvPath.Replace($path.TrimEnd('\'), '')
-    }
-	
-	Write-Verbose "Sanitized Environment Paths"
-	$userEnvPath.Split(';') | % {
-		Write-Verbose ("`t" + $_)
-	}
-
-    if ($prepend) {
-        $envPath = "$path;" + $envPath
-		$userEnvPath = "$path;" + $userEnvPath
-    } else {
-        $envPath += ";$path"
-		$userEnvPath += ";$path"
-    }
-
-    $env:Path = $envPath
-    if ($persist) {
-        Write-Verbose "Persisting update to PATH User environment variable"
-		$userEnvPath.Split(';') | % {
-			Write-Verbose ("`t" + $_)
-		}
-        [Environment]::SetEnvironmentVariable("Path", $userEnvPath, [System.EnvironmentVariableTarget]::User)
-    }
-
-    if ($emitAzPipelineLogCommand) {
-        if ($prepend) {
-            Write-Host "##vso[task.prependpath]$path"
-        } else {
-            Write-Host "##vso[task.setvariable variable=PATH]$userEnvPath"
+    # Always remove $Path from the environment first
+    @($Path, $Path + '\') | ForEach-Object { 
+        $pathToRemove = $_
+        @('Session', 'User', 'Machine') | ForEach-Object {
+            $container = $_
+            try {
+                Remove-EnvPath `
+                -Path $pathToRemove `
+                -Container $container
+            }
+            catch {
+                Write-Verbose "Failed to remove $pathToRemove from $container\PATH" 
+            }
         }
     }
+    
+    # Adding $Path only to Session container is normally sufficient
+    # When $Persist is specified, also add to User container
+    $containers = @('Session')
+    if ($Persist) { $containers += 'User' }
 
-    Write-Verbose "Added $path to PATH variable"
+    $containers | ForEach-Object {
+        Add-EnvPath `
+            -Path $Path `
+            -Container $_ `
+            -Prepend
+    }
+
+    # Emit Azure Pipline Log Command to prepend $Path to PATH environment variable
+    Write-Host "##vso[task.prependpath]$Path" 
 }
+
+
+####################################### Script Body ########################
 
 $ScriptRoot = Get-PSScriptLocationFullPath
 Write-Verbose "Script Root is at $ScriptRoot"
+
+# Import Module EnvPaths\EnvPaths.psm1
+Import-Module (Join-Path $ScriptRoot 'EnvPaths\EnvPaths.psm1')
+
 if (-not $DestinationPath) {
     $TestHostLocation = $ScriptRoot
 } else {
     # Copy the TestHost SDK over to the target location
     Write-Verbose "Copying TestHost to $DestinationPath"
-    Get-ChildItem -Path $ScriptRoot -Exclude "InstallMe.ps1*" | % {
+    Get-ChildItem -Path $ScriptRoot | ForEach-Object {
         Copy-Item -Recurse -Path $_ -Destination $DestinationPath -Container -Force
     }
 
@@ -136,8 +102,34 @@ if (-not $DestinationPath) {
 }
 
 Write-Verbose "TestHost Location: $TestHostLocation"
+Update-EnvPath -Path $TestHostLocation -Persist:$PersistPathUpdate
 
-Add-EnvPath -path $TestHostLocation -prepend -emitAzPipelineLogCommand -persist:$PersistPathUpdate
+# Set up a new NuGet cache
+$runtimePacksCache = Join-Path $TestHostLocation '.runtimepacks'
+if (test-path -PathType Container -Path $runtimePacksCache) {
+    $nugetCache = Join-Path $TestHostLocation '.nuget'
+    $nugetHttpCache = Join-Path $nugetCache 'v3-cache'
+    $nugetPluginsCache = Join-Path $nugetCache 'plugins-cache'
+    if (Test-Path $nugetCache) {
+        Write-Verbose "$nugetCache Exists - Removing..."
+        Remove-Item -Path $nugetCache -Force -Recurse
+    }
+    New-Item -ItemType Directory -Path $nugetCache | Out-Null
+    New-Item -ItemType Directory -Path $nugetHttpCache
+    New-Item -ItemType Directory -Path $nugetPluginsCache
+
+    Write-Verbose "Populating NuGet Packages Source/Cache at $nugetCache from $runtimePacksCache.."
+    Copy-Item -Path "$runtimePacksCache\*" -Destination "$TestHostLocation\.nuget\" -Recurse
+
+    # Set up the env variable and emit the Azure Pipelines Log Command to redirect NuGet cache
+    $env:NUGET_PACKAGES=$nugetCache
+    $env:NUGET_HTTP_CACHE_PATH=$nugetHttpCache
+    $env:NUGET_PLUGINS_CACHE_PATH=$nugetPluginsCache
+
+    Write-Host "##vso[task.setvariable variable=NUGET_PACKAGES]$nugetCache"
+    Write-Host "##vso[task.setvariable variable=NUGET_HTTP_CACHE_PATH]$nugetHttpCache"
+    Write-Host "##vso[task.setvariable variable=NUGET_PLUGINS_CACHE_PATH]$nugetPluginsCache"
+}
 
 <#
     Emit the right signals to Azure Pipelines about 
@@ -150,3 +142,4 @@ Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]$TestHostLocation"
 $env:DOTNET_MULTILEVEL_LOOKUP = 0
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = 1
 $env:DOTNET_ROOT=$TestHostLocation
+
