@@ -116,5 +116,9 @@ Function Start-BuildCommand {
 }
 
 Start-BuildCommand {
-    $Commands | Invoke-Expression
+    $Commands | ForEach-Object {
+        $command = $_
+        Write-Verbose "$command..."
+        Invoke-Expression $command
+    }
 }
