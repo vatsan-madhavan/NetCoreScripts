@@ -1,19 +1,23 @@
 <#
 .SYNOPSIS
-    Runs one or more Build Commands in VS Developer Command Prompt environment
+    Runs a Build Command in VS Developer Command Prompt environment
 .DESCRIPTION
-    Runs one or more commands in VS Developer Command Prompt Environment
-.PARAMETER Commands
-    List of commands to run
+    Runs a commands in VS Developer Command Prompt Environment
+.PARAMETER Command
+   Command to run
 .EXAMPLE
-    PS C:\> StartBuildCommand -Commands 'msbuild /?'
+    PS C:\> StartBuildCommand -Command msbuild /?
     
     Runs 'msbuild /?' 
 #>
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position = 0)]
+    [string]
+    $Command, 
+
+    [Parameter(Position=1, ValueFromRemainingArguments)]
     [string[]]
-    $Commands
+    $Arguments
 )
 
 $script:SavedEnv = @{}
@@ -115,10 +119,14 @@ Function Start-BuildCommand {
     }
 }
 
+[string]$arguments = ($Arguments -join ' ').Trim()
+if ($arguments) {
+    $arguments = ' ' + $arguments
+}
+
+$cmd = $Command + $arguments
+
 Start-BuildCommand {
-    $Commands | ForEach-Object {
-        $command = $_
-        Write-Verbose "$command..."
-        Invoke-Expression $command
-    }
+    Write-Verbose "$cmd..."
+    Invoke-Expression $cmd
 }

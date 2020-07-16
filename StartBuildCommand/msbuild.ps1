@@ -13,6 +13,7 @@
     Shows commandline help for msbuild.exe
 #>
 param (
+    [Parameter(Position=0, ValueFromRemainingArguments)]
     [string[]]
     $Arguments
 )
@@ -31,10 +32,10 @@ if (-not (Test-Path -PathType Leaf -Path $startBuildCommandScript)) {
     Write-Error "$startBuildComandScriptName not found" -ErrorAction Stop
 }
 
-$command = @('msbuild') + $Arguments
+[string]$msbuildCommand = 'msbuild'
 
 try {
-    . $startBuildCommandScript -Commands ($command -join ' ')
+    . $startBuildCommandScript -Command $msbuildCommand -Arguments $Arguments
 } catch {
     Write-Error -Exception $_.Exception -ErrorAction Stop
 }
