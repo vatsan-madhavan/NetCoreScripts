@@ -3,6 +3,8 @@
     Runs a Build Command in VS Developer Command Prompt environment
 .DESCRIPTION
     Runs a commands in VS Developer Command Prompt Environment
+
+    To see tool help, call with '/?' (not '-?'). Also see examples.
 .PARAMETER Command
    Command to run
 .EXAMPLE

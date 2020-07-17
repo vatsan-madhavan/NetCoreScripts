@@ -3,6 +3,8 @@
     Launches msbuild
 .DESCRIPTION
     Queries the environment for installed versions of Visual Studio, and dynamically launches msbuild within a VS Developer Command Prompt like environment with the supplied arguments
+    
+    To see help for msbuild, call with '/?' (not '-?'). Also see examples.
 .PARAMETER Arguments
     List of arguments to pass to msbuild
 .EXAMPLE
