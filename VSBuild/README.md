@@ -2,24 +2,26 @@
 
 ## Overview
 
-`VSBuild.ps1` (and `VSBuild.cmd`) can launch arbitrary programs that are usually only available inside the *Visual Studio Developer Command Prompt* Environment. 
+`VSDevCmd.ps1` (and `VSDevCmd.cmd`) can launch arbitrary programs that are usually only available inside the *Visual Studio Developer Command Prompt* Environment. 
 
 These are inspired by `powershell -Command` functionality that enables any powershell command or script to be invoked directly without having to enter the PowerShell CLI environment. 
 
-`MSBuild.ps1` (and `msbuild.cmd`) are special purpose wrappers around `VSBuild.ps1` intended to launch `msbuild.exe`. 
+`MSBuild.ps1` (and `msbuild.cmd`) are special purpose wrappers around `VSDevCmd.ps1` intended to launch `msbuild.exe`. 
 
-## VSBuild.ps1
+All the logic is in the reusable `VSDevCmd.psm1` module.
+
+## VSDevCmd.ps1
 
 ```
 NAME
-    VSBuild.ps1
+    VSDevCmd.ps1
     
 SYNOPSIS
     Runs a Build Command in VS Developer Command Prompt environment
     
     
 SYNTAX
-    VSBuild.ps1 [-Command] <String> [[-Arguments] <String[]>] [<CommonParameters>]
+    VSDevCmd.ps1 [-Command] <String> [[-Arguments] <String[]>] [<CommonParameters>]
     
     
 DESCRIPTION
@@ -34,7 +36,7 @@ PARAMETERS
 
     -------------------------- EXAMPLE 1 --------------------------
 
-    PS C:\>.\VSBuild.ps1 msbuild /?
+    PS C:\>.\VSDevCmd.ps1 msbuild /?
 
     Runs 'msbuild /?'
 ```

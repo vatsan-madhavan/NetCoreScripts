@@ -26,16 +26,9 @@ Function Get-PSScriptLocationFullPath {
     (Get-Item $PSScriptRoot).FullName
 }
 
-$startBuildComandScriptName = 'VSBuild.ps1'
-$startBuildCommandScript = Join-Path (Get-PSScriptLocationFullPath) $startBuildComandScriptName
-if (-not (Test-Path -PathType Leaf -Path $startBuildCommandScript)) {
-    Write-Error "$startBuildComandScriptName not found" -ErrorAction Stop
-}
+$moduleName= 'VSDevCmd.psm1'
+$modulePath = Join-Path (Get-PSScriptLocationFullPath) $moduleName
+Import-Module $modulePath
 
-[string]$msbuildCommand = 'msbuild'
 
-try {
-    . $startBuildCommandScript -Command $msbuildCommand -Arguments $Arguments
-} catch {
-    Write-Error -Exception $_.Exception -ErrorAction Stop
-}
+Start-VsBuildCommand 'msbuild' $Arguments
