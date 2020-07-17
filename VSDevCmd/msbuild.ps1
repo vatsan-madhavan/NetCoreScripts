@@ -33,4 +33,4 @@ $modulePath = Join-Path (Get-PSScriptLocationFullPath) $moduleName
 Import-Module $modulePath
 
 
-Start-VsBuildCommand 'msbuild' $Arguments
+Start-MsBuild $Arguments
