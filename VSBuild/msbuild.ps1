@@ -26,7 +26,7 @@ Function Get-PSScriptLocationFullPath {
     (Get-Item $PSScriptRoot).FullName
 }
 
-$startBuildComandScriptName = 'StartBuildCommand.ps1'
+$startBuildComandScriptName = 'VSBuild.ps1'
 $startBuildCommandScript = Join-Path (Get-PSScriptLocationFullPath) $startBuildComandScriptName
 if (-not (Test-Path -PathType Leaf -Path $startBuildCommandScript)) {
     Write-Error "$startBuildComandScriptName not found" -ErrorAction Stop

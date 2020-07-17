@@ -6,7 +6,7 @@
 .PARAMETER Command
    Command to run
 .EXAMPLE
-    PS C:\> StartBuildCommand -Command msbuild /?
+    PS C:\> .\VSBuild.ps1 msbuild /?
     
     Runs 'msbuild /?' 
 #>
