@@ -7,6 +7,33 @@ class VsDevCmd {
     }
     
     static [string] hidden Initialize_VsWhere([string] $InstallDir) {
+        # Look for vswhere in these locations: 
+        # -  $InstallDir\
+        # -  $env:TEMP\
+        # -  Anywhere in $env:PATH
+        # If found, do not re-download. 
+
+        [string]$vswhereExe = 'vswhere.exe'
+        [string]$downloadPath = Join-path $InstallDir $vswhereExe
+        [string]$VsWhereTempPath = Join-Path $env:TEMP $vswhereExe
+        
+        # Look under $InstallDir
+        if (Test-Path $downloadPath -PathType Leaf) {
+            return $downloadPath
+        }
+
+        # Look under $env:TEMP
+        if (Test-Path $VsWhereTempPath -PathType Leaf) {
+            return $VsWhereTempPath
+        }
+
+        # Search $env:PATH
+        $vsWhereCmd = Get-Command $vswhereExe -ErrorAction SilentlyContinue
+        if ($vsWhereCmd -and $vsWhereCmd.Source -and (Test-Path $vsWhereCmd.Source)) {
+            return $vsWhereCmd.Source
+        }
+
+        # Short-circuit logic didn't work - prepare to download a new copy of vswhere
         if (-not (Test-Path -Path $InstallDir)) {
             New-Item -ItemType Directory -Path $InstallDir | Out-Null
         } 
@@ -16,17 +43,16 @@ class VsDevCmd {
         }
 
         $vsWhereUri = 'https://github.com/microsoft/vswhere/releases/download/2.8.4/vswhere.exe'
-        $path = Join-path $InstallDir 'vswhere.exe'
 
-        if (-not (Test-Path -Path $path -PathType Leaf)) {
+        if (-not (Test-Path -Path $downloadPath -PathType Leaf)) {
             Invoke-WebRequest -Uri $vsWhereUri -OutFile (Join-Path $InstallDir 'vswhere.exe')
         }
 
-        if (-not (Test-Path -Path $path -PathType Leaf)) {
-            Write-Error "$path could not not be provisioned" -ErrorAction Stop
+        if (-not (Test-Path -Path $downloadPath -PathType Leaf)) {
+            Write-Error "$downloadPath could not not be provisioned" -ErrorAction Stop
         }
 
-        return $path
+        return $downloadPath
     }
     
     [void] hidden Update_EnvironmentVariable ([string] $Name, [string] $Value) {
@@ -75,12 +101,19 @@ class VsDevCmd {
 
     [string[]] Start_BuildCommand ([string]$Command, [string[]]$Arguments) {
         [string] $mergedArgs = ($Arguments -join ' ').Trim()
-        [string] $cmd = if ($mergedArgs) { $Command + ' ' + $mergedArgs} else { $Command } 
-
         try {
             $this.Start_VsDevCmd()
+
+            $cmdObject = Get-Command $Command -ErrorAction SilentlyContinue
+            if (-not $cmdObject) {
+                throw New-Object System.ArgumentException 'Application Not Found', $Command
+            }
+
+            [string] $cmd = $cmdObject.Source
+
             Write-Verbose "$cmd"
-            return Invoke-Expression "$cmd"
+            $result = . "$cmd" "$mergedArgs"
+            return $result
         }
         finally {
             $this.Restore_Environment()
@@ -99,18 +132,19 @@ function Start-VsBuildCommand {
         [string[]]
         $Arguments
     )
+   
+    [VsDevCmd]::new().Start_BuildCommand($Command, $Arguments)
+}
 
-    [string[]] $result = [string]::Empty
-    
-    try {
-        [VsDevCmd]$vsDevCmd = [VsDevCmd]::new()
-        $result = $vsDevCmd.Start_BuildCommand($Command, $Arguments)
-    } catch {
-        Write-Error $_.Exception.StackTrace -ErrorAction Continue
-        Write-Error -Exception $_.Exception -ErrorAction Stop
-    }
+function Start-MsBuild {
+    param (    
+        [Parameter(Position=0, ValueFromRemainingArguments)]
+        [string[]]
+        $Arguments
+    )
 
-    $result
+    Start-VsBuildCommand 'msbuild' $Arguments
 }
 
 Export-ModuleMember Start-VsBuildCommand
+Export-ModuleMember Start-MsBuild
