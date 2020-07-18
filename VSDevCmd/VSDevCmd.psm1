@@ -122,7 +122,7 @@ class VsDevCmd {
 }
 
 
-function Start-VsBuildCommand {
+function Invoke-VsBuildCommand {
     param (
         [Parameter(Mandatory=$true, Position = 0)]
         [string]
@@ -136,7 +136,9 @@ function Start-VsBuildCommand {
     [VsDevCmd]::new().Start_BuildCommand($Command, $Arguments)
 }
 
-function Start-MsBuild {
+Set-Alias -Name ivc -Value Invoke-VsBuildCommand
+
+function Invoke-MsBuild {
     param (    
         [Parameter(Position=0, ValueFromRemainingArguments)]
         [string[]]
@@ -146,5 +148,14 @@ function Start-MsBuild {
     Start-VsBuildCommand 'msbuild' $Arguments
 }
 
-Export-ModuleMember Start-VsBuildCommand
-Export-ModuleMember Start-MsBuild
+Set-Alias -Name imb -Value Invoke-MsBuild
+Set-Alias -Name msbuild -Value Invoke-MsBuild
+
+
+
+Export-ModuleMember Invoke-VsBuildCommand
+Export-ModuleMember -Alias ivc
+
+Export-ModuleMember Invoke-MsBuild
+Export-ModuleMember -Alias imb
+Export-ModuleMember -Alias msbuild
