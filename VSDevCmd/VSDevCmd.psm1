@@ -124,28 +124,64 @@ class VsDevCmd {
 
 function Invoke-VsBuildCommand {
     param (
-        [Parameter(Mandatory=$true, Position = 0)]
+        [Parameter(Mandatory=$true, Position = 0, HelpMessage='Application or Commadn to Run')]
         [string]
         $Command, 
     
-        [Parameter(Position=1, ValueFromRemainingArguments)]
+        [Parameter(Position=1, ValueFromRemainingArguments, HelpMessage='List of arguments')]
         [string[]]
         $Arguments
     )
    
     [VsDevCmd]::new().Start_BuildCommand($Command, $Arguments)
+
+    <#
+    .SYNOPSIS
+        Runs an application/command in the VS Developer Command Prompt environment
+    .DESCRIPTION
+        Runs an application/command in the VS Developer Command Prompt environment
+    .EXAMPLE
+        PS C:\> Invoke-VsBuildCommand msbuild /?
+        Runs 'msbuild /?'
+    .INPUTS
+        None. You cannot pipe objects to Invoke-VsBuildCommand
+    .OUTPUTS
+        System.String[]. Invoke-VsBuildCommand returns an array of strings that rerpesents the output of executing the application/command
+        with the given arguments
+    .PARAMETER Command
+        Application/Command to execute in the VS Developer Command Prompt Environment
+    .PARAMETER Arguments
+        Arguments to pass to Application/Command being executed
+    #>
 }
 
 Set-Alias -Name ivc -Value Invoke-VsBuildCommand
 
 function Invoke-MsBuild {
     param (    
-        [Parameter(Position=0, ValueFromRemainingArguments)]
+        [Parameter(Position=0, ValueFromRemainingArguments, HelpMessage='List of arguments')]
         [string[]]
         $Arguments
     )
 
     Start-VsBuildCommand 'msbuild' $Arguments
+
+    <#
+    .SYNOPSIS
+        Runs MSBuild in the VS Developer Command Prompt environment
+    .DESCRIPTION
+        Runs MSBuild in the VS Developer Command Prompt environment
+    .EXAMPLE
+        PS C:\> Invoke-MsBuild /?
+        Runs 'msbuild /?'
+    .INPUTS
+        None. You cannot pipe objects to Invoke-VsBuildCommand
+    .OUTPUTS
+        System.String[]. Invoke-MsBuild returns an array of strings that rerpesents the output of executing MSBuild
+        with the given arguments
+    .PARAMETER Arguments
+        Arguments to pass to MSBuild
+    #>
 }
 
 Set-Alias -Name imb -Value Invoke-MsBuild
