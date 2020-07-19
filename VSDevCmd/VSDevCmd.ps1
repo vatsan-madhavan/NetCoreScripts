@@ -34,4 +34,4 @@ $moduleName= 'VSDevCmd.psm1'
 $modulePath = Join-Path (Get-PSScriptLocationFullPath) $moduleName
 Import-Module $modulePath
 
-Start-VsBuildCommand $Command $Arguments
+ivc $Command $Arguments
