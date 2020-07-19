@@ -8,15 +8,22 @@ class VsDevCmd {
     
     static [string] hidden Initialize_VsWhere([string] $InstallDir) {
         # Look for vswhere in these locations: 
+        # - ${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe
         # -  $InstallDir\
         # -  $env:TEMP\
         # -  Anywhere in $env:PATH
         # If found, do not re-download. 
 
         [string]$vswhereExe = 'vswhere.exe'
+        [string]$visualStudioIntallerPath = Join-Path "${env:ProgramFiles(x86)}\\Microsoft Visual Studio\\Installer\" $vswhereExe
         [string]$downloadPath = Join-path $InstallDir $vswhereExe
         [string]$VsWhereTempPath = Join-Path $env:TEMP $vswhereExe
         
+        # Look under VS Installer Path 
+        if (Test-Path $visualStudioIntallerPath -PathType Leaf) {
+            return $visualStudioIntallerPath
+        }
+
         # Look under $InstallDir
         if (Test-Path $downloadPath -PathType Leaf) {
             return $downloadPath
@@ -78,7 +85,7 @@ class VsDevCmd {
     }
 
     [void] hidden Start_VsDevCmd() {
-        $installationPath = Invoke-Expression "$([VsDevCmd]::vswhere) -prerelease -latest -property installationPath"
+        $installationPath = . "$([VsDevCmd]::vswhere)" -prerelease -latest -property installationPath
         
         if (-not $installationPath) {
             Write-Error "Visual Studio Installation Path Not Found" - -ErrorAction Stop
@@ -104,13 +111,12 @@ class VsDevCmd {
         try {
             $this.Start_VsDevCmd()
 
-            $cmdObject = Get-Command $Command -ErrorAction SilentlyContinue
+            $cmdObject = Get-Command $Command -ErrorAction SilentlyContinue -CommandType Application
             if (-not $cmdObject) {
                 throw New-Object System.ArgumentException 'Application Not Found', $Command
             }
 
-            [string] $cmd = $cmdObject.Source
-
+            [string] $cmd = if ($cmdObject -is [array]) { $cmdObject[0].Source } else { $cmdObject.Source }
             Write-Verbose "$cmd"
             $result = . "$cmd" "$mergedArgs"
             return $result
@@ -164,7 +170,7 @@ function Invoke-MsBuild {
         $Arguments
     )
 
-    Start-VsBuildCommand 'msbuild' $Arguments
+    Invoke-VsBuildCommand 'msbuild' $Arguments
 
     <#
     .SYNOPSIS
