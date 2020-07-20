@@ -30,7 +30,11 @@ Function Get-PSScriptLocationFullPath {
 
 $moduleName= 'VSDevCmd.psm1'
 $modulePath = Join-Path (Get-PSScriptLocationFullPath) $moduleName
-Import-Module $modulePath
+Import-Module $modulePath -Scope Local
 
-
-msbuild $Arguments
+try {
+    msbuild $Arguments
+} catch {
+    $_.ScriptStackTrace
+    throw
+}
