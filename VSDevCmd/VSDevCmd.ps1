@@ -19,7 +19,11 @@ param (
 
     [Parameter(Position=1, ValueFromRemainingArguments)]
     [string[]]
-    $Arguments
+    $Arguments, 
+
+    [switch]
+    [CmdletBinding(PositionalBinding=$false)]
+    $Interactive
 )
 
 Function Get-PSScriptLocationFullPath {
@@ -34,4 +38,4 @@ $moduleName= 'VSDevCmd.psm1'
 $modulePath = Join-Path (Get-PSScriptLocationFullPath) $moduleName
 Import-Module $modulePath
 
-ivc $Command $Arguments
+vsdevcmd $Command $Arguments -Interactive:$Interactive
