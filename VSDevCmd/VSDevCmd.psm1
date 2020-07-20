@@ -207,7 +207,10 @@ class VsDevCmd {
 
     
     [string[]] Start_BuildCommand ([string]$Command, [string[]]$Arguments) {
-        [string] $mergedArgs = ($Arguments -join ' ').Trim()
+        return $this.Start_BuildCommand($Command, $Arguments, $false) # non-interactive
+    }
+
+    [string[]] Start_BuildCommand ([string]$Command, [string[]]$Arguments, [bool]$interactive) {
         try {
             $this.Start_VsDevCmd()
 
@@ -218,7 +221,14 @@ class VsDevCmd {
 
             [string] $cmd = if ($cmdObject -is [array]) { $cmdObject[0].Source } else { $cmdObject.Source }
             Write-Verbose "$cmd"
-            $result = . "$cmd" "$mergedArgs"
+
+            [string]$result = [string]::Empty
+            $p = Start-Process -FilePath "$cmd" -ArgumentList $Arguments -NoNewWindow -OutVariable result -PassThru 
+            if ($interactive) {
+                $p.WaitForExit() | Out-Host
+            } else {
+                $p.WaitForExit()
+            }
             return $result
         }
         finally {
@@ -267,7 +277,13 @@ function Invoke-VsBuildCommand {
         [Alias('BuildVersion')]
         [CmdletBinding(PositionalBinding=$false)]
         [string]
-        $VisualStudioBuildVersion = $null
+        $VisualStudioBuildVersion = $null, 
+
+        [Parameter(ParameterSetName='Default', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
+        [Parameter(ParameterSetName='CodeName', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
+        [CmdletBinding(PositionalBinding=$false)]
+        [switch]
+        $Interactive
     )
 
     <#
@@ -278,7 +294,7 @@ function Invoke-VsBuildCommand {
             [string] $productLine) {            # Dev15, Dev16 etc.                 $VisualStudioCodeName
     #>
    
-    [VsDevCmd]::new($VisualStudioBuildVersion, $VisualStudioEdition, $VisualStudioVersion, $VisualStudioCodeName).Start_BuildCommand($Command, $Arguments)
+    [VsDevCmd]::new($VisualStudioBuildVersion, $VisualStudioEdition, $VisualStudioVersion, $VisualStudioCodeName).Start_BuildCommand($Command, $Arguments, $Interactive)
 
     <#
     .SYNOPSIS
@@ -306,19 +322,56 @@ function Invoke-VsBuildCommand {
     .PARAMETER VisualStudioBuildVersion
         Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0").
         A prefix is sufficient (e.g., "15", "15.9", "16" etc.)
+    .PARAMETER Interactive
+        Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment
     #>
 }
 
-Set-Alias -Name ivc -Value Invoke-VsBuildCommand
-
 function Invoke-MsBuild {
+    [CmdletBinding(DefaultParameterSetName='Default')]
     param (    
-        [Parameter(Position=0, ValueFromRemainingArguments, HelpMessage='List of arguments')]
+        [Parameter(ParameterSetName = 'Default', Position=0, ValueFromRemainingArguments, HelpMessage='List of arguments')]
+        [Parameter(ParameterSetName = 'CodeName', Position=0, ValueFromRemainingArguments, HelpMessage='List of arguments')]
         [string[]]
-        $Arguments
+        $Arguments,
+
+        [Parameter(ParameterSetName='Default', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Edition (Community, Professional, Enterprise, etc.)')]
+        [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Edition (Community, Professional, Enterprise, etc.)')]
+        [CmdletBinding(PositionalBinding=$false)]
+        [Alias('Edition')]
+        [ValidateSet('Community', 'Professional', 'Enteprise', $null)]
+        [string]
+        $VisualStudioEdition = $null,
+
+        [Parameter(ParameterSetName='Default', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Version (2015, 2017, 2019 etc.)')]
+        [CmdletBinding(PositionalBinding=$false)]
+        [Alias('Version')]
+        [ValidateSet('2015', '2017', '2019', $null)]
+        [string]
+        $VisualStudioVersion = $null, 
+
+        [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Version CodeName (Dev14, Dev15, Dev16 etc.)')]
+        [CmdletBinding(PositionalBinding=$false)]
+        [Alias('CodeName')]
+        [ValidateSet('Dev14', 'Dev15', 'Dev16', $null)]
+        [string]
+        $VisualStudioCodeName=$null, 
+
+        [Parameter(ParameterSetName='Default', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
+        [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
+        [Alias('BuildVersion')]
+        [CmdletBinding(PositionalBinding=$false)]
+        [string]
+        $VisualStudioBuildVersion = $null, 
+
+        [Parameter(ParameterSetName='Default', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
+        [Parameter(ParameterSetName='CodeName', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
+        [CmdletBinding(PositionalBinding=$false)]
+        [switch]
+        $Interactive
     )
 
-    Invoke-VsBuildCommand 'msbuild' $Arguments
+    [VsDevCmd]::new($VisualStudioBuildVersion, $VisualStudioEdition, $VisualStudioVersion, $VisualStudioCodeName).Start_BuildCommand('msbuild', $Arguments, $Interactive)
 
     <#
     .SYNOPSIS
@@ -335,8 +388,22 @@ function Invoke-MsBuild {
         with the given arguments
     .PARAMETER Arguments
         Arguments to pass to MSBuild
+    .PARAMETER VisualStudioEdition
+        Selects Visual Studio Development Environment based on Edition (Community, Professional, Enterprise, etc.)
+    .PARAMETER VisualStudioVersion
+        Selects Visual Studio Development Environment based on Version (2015, 2017, 2019 etc.)
+    .PARAMETER VisualStudioCodename
+        Selects Visual Studio Development Environment based on Version CodeName (Dev14, Dev15, Dev16 etc.)
+    .PARAMETER VisualStudioBuildVersion
+        Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0").
+        A prefix is sufficient (e.g., "15", "15.9", "16" etc.)
+    .PARAMETER Interactive
+        Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment
     #>
 }
+
+Set-Alias -Name ivdc -Value Invoke-VsBuildCommand
+Set-Alias -Name vsdevcmd -Value Invoke-VsBuildCommand
 
 Set-Alias -Name imb -Value Invoke-MsBuild
 Set-Alias -Name msbuild -Value Invoke-MsBuild
@@ -344,7 +411,8 @@ Set-Alias -Name msbuild -Value Invoke-MsBuild
 
 
 Export-ModuleMember Invoke-VsBuildCommand
-Export-ModuleMember -Alias ivc
+Export-ModuleMember -Alias ivdc
+Export-ModuleMember -Alias vsdevcmd
 
 Export-ModuleMember Invoke-MsBuild
 Export-ModuleMember -Alias imb
