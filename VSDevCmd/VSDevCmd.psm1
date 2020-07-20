@@ -223,7 +223,12 @@ class VsDevCmd {
             Write-Verbose "$cmd"
 
             [string]$result = [string]::Empty
-            $p = Start-Process -FilePath "$cmd" -ArgumentList $Arguments -NoNewWindow -OutVariable result -PassThru 
+            [System.Diagnostics.Process]$p = $null
+            if ($Arguments -and $Arguments.Count -gt 0) {
+                $p = Start-Process -FilePath "$cmd" -ArgumentList $Arguments -NoNewWindow -OutVariable result -PassThru 
+            } else {
+                $p = Start-Process -FilePath "$cmd" -NoNewWindow -OutVariable result -PassThru 
+            }
             if ($interactive) {
                 $p.WaitForExit() | Out-Host
             } else {
