@@ -1,4 +1,4 @@
-class VsDevCmd {
+﻿class VsDevCmd {
     hidden [System.Collections.Generic.Dictionary[string, string]]$SavedEnv = @{}
     static hidden [string] $vswhere = [VsDevCmd]::Initialize_VsWhere()
     hidden [string]$vsDevCmd
@@ -6,21 +6,21 @@ class VsDevCmd {
     static [string] hidden Initialize_VsWhere() {
         return [VsDevCmd]::Initialize_VsWhere($env:TEMP)
     }
-    
+
     static [string] hidden Initialize_VsWhere([string] $InstallDir) {
-        # Look for vswhere in these locations: 
+        # Look for vswhere in these locations:
         # - ${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe
         # -  $InstallDir\
         # -  $env:TEMP\
         # -  Anywhere in $env:PATH
-        # If found, do not re-download. 
+        # If found, do not re-download.
 
         [string]$vswhereExe = 'vswhere.exe'
         [string]$visualStudioIntallerPath = Join-Path "${env:ProgramFiles(x86)}\\Microsoft Visual Studio\\Installer\" $vswhereExe
         [string]$downloadPath = Join-path $InstallDir $vswhereExe
         [string]$VsWhereTempPath = Join-Path $env:TEMP $vswhereExe
-        
-        # Look under VS Installer Path 
+
+        # Look under VS Installer Path
         if (Test-Path $visualStudioIntallerPath -PathType Leaf) {
             return $visualStudioIntallerPath
         }
@@ -44,7 +44,7 @@ class VsDevCmd {
         # Short-circuit logic didn't work - prepare to download a new copy of vswhere
         if (-not (Test-Path -Path $InstallDir)) {
             New-Item -ItemType Directory -Path $InstallDir | Out-Null
-        } 
+        }
 
         if (-not (Test-Path -Path $InstallDir -PathType Container)) {
             throw New-Object System.ArgumentException -ArgumentList 'Directory could not be created', 'InstallDir'
@@ -64,7 +64,7 @@ class VsDevCmd {
     }
 
     VsDevCmd() {
-        $this.vsDevCmd = [VsDevCmd]::GetVsDevCmdPath($null, $null, $null, $null)   
+        $this.vsDevCmd = [VsDevCmd]::GetVsDevCmdPath($null, $null, $null, $null)
     }
 
     <#
@@ -76,13 +76,13 @@ class VsDevCmd {
     VsDevCmd([string]$productDisplayVersion, [string]$edition, [string]$productLineVersion, [string] $productLine) {
         $this.vsDevCmd = [VsDevCmd]::GetVsDevCmdPath($productDisplayVersion, $edition, $productLineVersion, $productLine)
     }
-    
+
     [void] hidden Update_EnvironmentVariable ([string] $Name, [string] $Value) {
         if (-not ($this.SavedEnv.ContainsKey($Name))) {
             $oldValue = [System.Environment]::GetEnvironmentVariable($Name, [System.EnvironmentVariableTarget]::Process)
             $this.SavedEnv[$Name] = $oldValue
         }
-    
+
         Write-Verbose "Updating env[$name] = $value"
         [System.Environment]::SetEnvironmentVariable("$name", "$value", [System.EnvironmentVariableTarget]::Process)
     }
@@ -125,14 +125,14 @@ class VsDevCmd {
                 }
                 if ($productLineInfo[$productLineVersion] -ine $productLine) {
                     # error
-                    throw New-Object System.ArgumentException "{productLineVersion{$productLineVersion}} and {productLine{$productLine}} are not mutually consistent; {productLine} should be {$productLineInfo[$productLineVersion]}" 'productLine'
+                    throw New-Object System.ArgumentException("{productLineVersion{$productLineVersion}} and {productLine{$productLine}} are not mutually consistent; {productLine} should be {$productLineInfo[$productLineVersion]}", 'productLine')
                 }
             }
 
 
             [array]$installations = . "$([VsDevCmd]::vswhere)" -prerelease -legacy -format json | ConvertFrom-Json
 
-            # Use only installations with a catalog 
+            # Use only installations with a catalog
             $installations = $installations | Where-Object {
                 Get-Member -InputObject $_ -Name "catalog" -MemberType Properties
             }
@@ -168,14 +168,14 @@ class VsDevCmd {
             }
 
             [string]$installationPath = if ($installations -is [array]) { $installations[0].installationPath } else { $installations.installationPath }
-        
+
             if ((-not $installationPath) -or (-not (test-path -Path $installationPath -PathType Container))) {
                 throw New-Object System.IO.DirectoryNotFoundException 'Installation Path Not found'
             }
-        
+
             $vsDevCmdDir = Join-Path (Join-Path $installationPath 'Common7') 'Tools'
             $vsDevCmdName = 'vsDevCmd.bat'
-            
+
             $vsDevCmdPath = Join-Path $vsDevCmdDir $vsDevCmdName
             if (test-path -PathType Leaf -Path $vsDevCmdPath) {
                 return $vsDevCmdPath
@@ -186,7 +186,7 @@ class VsDevCmd {
             if (test-path -PathType Leaf -Path $vsDevCmdPath) {
                 return $vsDevCmdPath
             }
-         
+
             throw New-Object System.IO.FileNotFoundException "$vsDevCmdPath not found"
     }
 
@@ -205,7 +205,7 @@ class VsDevCmd {
        }
     }
 
-    
+
     [string[]] Start_BuildCommand ([string]$Command, [string[]]$Arguments) {
         return $this.Start_BuildCommand($Command, $Arguments, $false) # non-interactive
     }
@@ -225,9 +225,9 @@ class VsDevCmd {
             [string]$result = [string]::Empty
             [System.Diagnostics.Process]$p = $null
             if ($Arguments -and $Arguments.Count -gt 0) {
-                $p = Start-Process -FilePath "$cmd" -ArgumentList $Arguments -NoNewWindow -OutVariable result -PassThru 
+                $p = Start-Process -FilePath "$cmd" -ArgumentList $Arguments -NoNewWindow -OutVariable result -PassThru
             } else {
-                $p = Start-Process -FilePath "$cmd" -NoNewWindow -OutVariable result -PassThru 
+                $p = Start-Process -FilePath "$cmd" -NoNewWindow -OutVariable result -PassThru
             }
             if ($interactive) {
                 $p.WaitForExit() | Out-Host
@@ -248,7 +248,7 @@ function Invoke-VsDevCommand {
         [Parameter(ParameterSetName = 'Default', Position=0 ,Mandatory=$true, HelpMessage='Application or Command to Run')]
         [Parameter(ParameterSetName = 'CodeName', Position=0 ,Mandatory=$true, HelpMessage='Application or Command to Run')]
         [string]
-        $Command, 
+        $Command,
 
         [Parameter(ParameterSetName = 'Default', Position=1, ValueFromRemainingArguments, HelpMessage='List of arguments')]
         [Parameter(ParameterSetName = 'CodeName', Position=1, ValueFromRemainingArguments, HelpMessage='List of arguments')]
@@ -268,21 +268,21 @@ function Invoke-VsDevCommand {
         [Alias('Version')]
         [ValidateSet('2015', '2017', '2019', $null)]
         [string]
-        $VisualStudioVersion = $null, 
+        $VisualStudioVersion = $null,
 
         [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Version CodeName (Dev14, Dev15, Dev16 etc.)')]
         [CmdletBinding(PositionalBinding=$false)]
         [Alias('CodeName')]
         [ValidateSet('Dev14', 'Dev15', 'Dev16', $null)]
         [string]
-        $VisualStudioCodeName=$null, 
+        $VisualStudioCodeName=$null,
 
         [Parameter(ParameterSetName='Default', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
         [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
         [Alias('BuildVersion')]
         [CmdletBinding(PositionalBinding=$false)]
         [string]
-        $VisualStudioBuildVersion = $null, 
+        $VisualStudioBuildVersion = $null,
 
         [Parameter(ParameterSetName='Default', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
         [Parameter(ParameterSetName='CodeName', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
@@ -298,7 +298,7 @@ function Invoke-VsDevCommand {
             [string] $productLineVersion,       # 2015, 2017, 2019 etc.             $VisualStudioVersion
             [string] $productLine) {            # Dev15, Dev16 etc.                 $VisualStudioCodeName
     #>
-   
+
     [VsDevCmd]::new($VisualStudioBuildVersion, $VisualStudioEdition, $VisualStudioVersion, $VisualStudioCodeName).Start_BuildCommand($Command, $Arguments, $Interactive)
 
     <#
@@ -334,7 +334,7 @@ function Invoke-VsDevCommand {
 
 function Invoke-MsBuild {
     [CmdletBinding(DefaultParameterSetName='Default')]
-    param (    
+    param (
         [Parameter(ParameterSetName = 'Default', Position=0, ValueFromRemainingArguments, HelpMessage='List of arguments')]
         [Parameter(ParameterSetName = 'CodeName', Position=0, ValueFromRemainingArguments, HelpMessage='List of arguments')]
         [string[]]
@@ -353,21 +353,21 @@ function Invoke-MsBuild {
         [Alias('Version')]
         [ValidateSet('2015', '2017', '2019', $null)]
         [string]
-        $VisualStudioVersion = $null, 
+        $VisualStudioVersion = $null,
 
         [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Version CodeName (Dev14, Dev15, Dev16 etc.)')]
         [CmdletBinding(PositionalBinding=$false)]
         [Alias('CodeName')]
         [ValidateSet('Dev14', 'Dev15', 'Dev16', $null)]
         [string]
-        $VisualStudioCodeName=$null, 
+        $VisualStudioCodeName=$null,
 
         [Parameter(ParameterSetName='Default', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
         [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
         [Alias('BuildVersion')]
         [CmdletBinding(PositionalBinding=$false)]
         [string]
-        $VisualStudioBuildVersion = $null, 
+        $VisualStudioBuildVersion = $null,
 
         [Parameter(ParameterSetName='Default', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
         [Parameter(ParameterSetName='CodeName', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]

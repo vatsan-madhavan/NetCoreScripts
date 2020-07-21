@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Runs a Build Command in VS Developer Command Prompt environment
 .DESCRIPTION
@@ -22,7 +22,7 @@
     Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment
 .EXAMPLE
     PS C:\> .\VsDevCmd.ps1 msbuild /?
-    Runs 'msbuild /?' 
+    Runs 'msbuild /?'
 .EXAMPLE
     PS C:\> .\VsDevCmd.ps1 cmd -Interactive
     Starts a cmd prompt interactively in Visual Studio Developer Command Prompt Environment
@@ -33,7 +33,7 @@ param (
     [Parameter(ParameterSetName = 'Default', Position=0 ,Mandatory=$true, HelpMessage='Application or Command to Run')]
     [Parameter(ParameterSetName = 'CodeName', Position=0 ,Mandatory=$true, HelpMessage='Application or Command to Run')]
     [string]
-    $Command, 
+    $Command,
 
     [Parameter(ParameterSetName = 'Default', Position=1, ValueFromRemainingArguments, HelpMessage='List of arguments')]
     [Parameter(ParameterSetName = 'CodeName', Position=1, ValueFromRemainingArguments, HelpMessage='List of arguments')]
@@ -53,21 +53,21 @@ param (
     [Alias('Version')]
     [ValidateSet('2015', '2017', '2019', $null)]
     [string]
-    $VisualStudioVersion = $null, 
+    $VisualStudioVersion = $null,
 
     [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Version CodeName (Dev14, Dev15, Dev16 etc.)')]
     [CmdletBinding(PositionalBinding=$false)]
     [Alias('CodeName')]
     [ValidateSet('Dev14', 'Dev15', 'Dev16', $null)]
     [string]
-    $VisualStudioCodeName=$null, 
+    $VisualStudioCodeName=$null,
 
     [Parameter(ParameterSetName='Default', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
     [Parameter(ParameterSetName='CodeName', Mandatory = $false, HelpMessage='Selects Visual Studio Development Environment based on Build Version (e.g., "15.9.25", "16.8.0"). A prefix is sufficient (e.g., "15", "15.9", "16" etc.)')]
     [Alias('BuildVersion')]
     [CmdletBinding(PositionalBinding=$false)]
     [string]
-    $VisualStudioBuildVersion = $null, 
+    $VisualStudioBuildVersion = $null,
 
     [Parameter(ParameterSetName='Default', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
     [Parameter(ParameterSetName='CodeName', HelpMessage='Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment')]
