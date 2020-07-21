@@ -21,9 +21,12 @@
 .PARAMETER Interactive
     Runs in interactive mode. Useful for running programs like cmd.exe, pwsh.exe, powershell.exe or csi.exe in the Visual Studio Developer Command Prompt Environment
 .EXAMPLE
-    PS C:\> .\VSBuild.ps1 msbuild /?
-    
+    PS C:\> .\VsDevCmd.ps1 msbuild /?
     Runs 'msbuild /?' 
+.EXAMPLE
+    PS C:\> .\VsDevCmd.ps1 cmd -Interactive
+    Starts a cmd prompt interactively in Visual Studio Developer Command Prompt Environment
+    All the applications normally avaialble in the Visual Studio Developer Command Prompt Environment will be available in this cmd.exe session
 #>
 [CmdletBinding(DefaultParameterSetName='Default')]
 param (
@@ -88,13 +91,13 @@ Import-Module $modulePath
 switch ($PSCmdlet.ParameterSetName) {
     'CodeName' {
         # Call using VisualStudioCodeName; Do not pass $VisualStudioVersion
-        Invoke-VsBuildCommand $Command -Arguments $Arguments -VisualStudioEdition $VisualStudioEdition -VisualStudioCodeName $VisualStudioCodeName -VisualStudioBuildVersion $VisualStudioBuildVersion -Interactive:$Interactive
+        Invoke-VsDevCommand $Command -Arguments $Arguments -VisualStudioEdition $VisualStudioEdition -VisualStudioCodeName $VisualStudioCodeName -VisualStudioBuildVersion $VisualStudioBuildVersion -Interactive:$Interactive
         Break;
     }
 
     Default {
         # Call using $VisualStudioVersion; Do not pass $VisualStudioCodeName
-        Invoke-VsBuildCommand $Command -Arguments $Arguments -VisualStudioEdition $VisualStudioEdition -VisualStudioVersion $VisualStudioVersion -VisualStudioBuildVersion $VisualStudioBuildVersion -Interactive:$Interactive
+        Invoke-VsDevCommand $Command -Arguments $Arguments -VisualStudioEdition $VisualStudioEdition -VisualStudioVersion $VisualStudioVersion -VisualStudioBuildVersion $VisualStudioBuildVersion -Interactive:$Interactive
         Break;
     }
 }

@@ -242,7 +242,7 @@ class VsDevCmd {
     }
 }
 
-function Invoke-VsBuildCommand {
+function Invoke-VsDevCommand {
     [CmdletBinding(DefaultParameterSetName='Default')]
     param (
         [Parameter(ParameterSetName = 'Default', Position=0 ,Mandatory=$true, HelpMessage='Application or Command to Run')]
@@ -307,12 +307,12 @@ function Invoke-VsBuildCommand {
     .DESCRIPTION
         Runs an application/command in the VS Developer Command Prompt environment
     .EXAMPLE
-        PS C:\> Invoke-VsBuildCommand msbuild /?
+        PS C:\> Invoke-VsDevCommand msbuild /?
         Runs 'msbuild /?'
     .INPUTS
-        None. You cannot pipe objects to Invoke-VsBuildCommand
+        None. You cannot pipe objects to Invoke-VsDevCommand
     .OUTPUTS
-        System.String[]. Invoke-VsBuildCommand returns an array of strings that rerpesents the output of executing the application/command
+        System.String[]. Invoke-VsDevCommand returns an array of strings that rerpesents the output of executing the application/command
         with the given arguments
     .PARAMETER Command
         Application/Command to execute in the VS Developer Command Prompt Environment
@@ -387,7 +387,7 @@ function Invoke-MsBuild {
         PS C:\> Invoke-MsBuild /?
         Runs 'msbuild /?'
     .INPUTS
-        None. You cannot pipe objects to Invoke-VsBuildCommand
+        None. You cannot pipe objects to Invoke-VsDevCommand
     .OUTPUTS
         System.String[]. Invoke-MsBuild returns an array of strings that rerpesents the output of executing MSBuild
         with the given arguments
@@ -407,15 +407,15 @@ function Invoke-MsBuild {
     #>
 }
 
-Set-Alias -Name ivdc -Value Invoke-VsBuildCommand
-Set-Alias -Name vsdevcmd -Value Invoke-VsBuildCommand
+Set-Alias -Name ivdc -Value Invoke-VsDevCommand
+Set-Alias -Name vsdevcmd -Value Invoke-VsDevCommand
 
 Set-Alias -Name imb -Value Invoke-MsBuild
 Set-Alias -Name msbuild -Value Invoke-MsBuild
 
 
 
-Export-ModuleMember Invoke-VsBuildCommand
+Export-ModuleMember Invoke-VsDevCommand
 Export-ModuleMember -Alias ivdc
 Export-ModuleMember -Alias vsdevcmd
 
