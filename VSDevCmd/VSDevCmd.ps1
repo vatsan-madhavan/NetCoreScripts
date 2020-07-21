@@ -1,4 +1,38 @@
-﻿<#
+﻿<#PSScriptInfo
+
+.VERSION 0.0.1
+
+.GUID d86f9801-fccc-44e0-93f3-ac8b7f44d896
+
+.AUTHOR Vatsan Madhavan
+
+.COMPANYNAME
+
+.COPYRIGHT
+
+.TAGS
+
+.LICENSEURI
+
+.PROJECTURI
+
+.ICONURI
+
+.EXTERNALMODULEDEPENDENCIES 
+
+.REQUIREDSCRIPTS
+
+.EXTERNALSCRIPTDEPENDENCIES
+
+.RELEASENOTES
+
+
+.PRIVATEDATA
+
+#> 
+
+
+<#
 .SYNOPSIS
     Runs a Build Command in VS Developer Command Prompt environment
 .DESCRIPTION
